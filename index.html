@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>StudyBuddy — Learn. Practice. Master.</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#151830">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StudyBuddy">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   THEME TOKENS — light/dark aware. Tweak these to reskin the whole app.
+   ===================================================================== */
+:root{
+  --bg:#f5f7fb; --bg2:#eef1fa;
+  --card:#ffffff; --card-line:#e6e9f5;
+  --ink:#12172b; --ink-soft:#5c6480;
+  --p1:#6d5bf0; --p2:#a78bfa;      /* primary purple gradient */
+  --p3:#22d3c9; --p4:#3ddc97;      /* teal/green accents */
+  --warn:#ff6b6b; --gold:#ffc73c;
+  --glass:rgba(255,255,255,.6); --glass-line:rgba(255,255,255,.5);
+  --radius:20px; --radius-sm:12px;
+  --shadow:0 14px 34px -18px rgba(30,20,80,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0d18; --bg2:#0f1224;
+    --card:#151830; --card-line:#262c4c;
+    --ink:#f1f2fb; --ink-soft:#9aa0c2;
+    --glass:rgba(21,24,48,.55); --glass-line:rgba(255,255,255,.08);
+    --shadow:0 18px 38px -18px rgba(0,0,0,.55);
+  }
+}
+html[data-theme="light"]{ --bg:#f5f7fb; --bg2:#eef1fa; --card:#fff; --card-line:#e6e9f5; --ink:#12172b; --ink-soft:#5c6480; --glass:rgba(255,255,255,.6); --glass-line:rgba(255,255,255,.5); }
+html[data-theme="dark"]{ --bg:#0b0d18; --bg2:#0f1224; --card:#151830; --card-line:#262c4c; --ink:#f1f2fb; --ink-soft:#9aa0c2; --glass:rgba(21,24,48,.55); --glass-line:rgba(255,255,255,.08); }
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  background:
+    radial-gradient(circle at 8% -4%, rgba(109,91,240,.18), transparent 34%),
+    radial-gradient(circle at 96% 4%, rgba(34,211,201,.14), transparent 32%),
+    var(--bg);
+  color:var(--ink); font-family:'Manrope',sans-serif;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+h1,h2,h3,.display{font-family:'Fraunces',serif;}
+button{font-family:inherit;cursor:pointer;}
+input,textarea{font-family:inherit;}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* =====================================================================
+   APP SHELL
+   ===================================================================== */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px 10px; flex-shrink:0;
+}
+.brand{display:flex;align-items:center;gap:9px;}
+.brand .mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--p1),var(--p3));
+  display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--shadow);}
+.brand .word{font-family:'Fraunces',serif;font-weight:800;font-size:18px;}
+.top-actions{display:flex;gap:8px;align-items:center;}
+.icon-pill{
+  display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--card-line);
+  border-radius:30px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:var(--shadow);
+}
+.theme-btn{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--card-line);
+  display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:var(--shadow);}
+
+.screens{flex:1;min-height:0;position:relative;}
+.screen{
+  position:absolute;inset:0;overflow-y:auto;padding:4px 18px 100px;
+  display:none; -webkit-overflow-scrolling:touch;
+}
+.screen.active{display:block;animation:fadein .3s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* bottom nav */
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;
+  padding:9px 8px calc(9px + env(safe-area-inset-bottom));
+  background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--glass-line);z-index:40;
+}
+.navbtn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;
+  color:var(--ink-soft);font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:12px;transition:color .15s, transform .15s;
+}
+.navbtn .ic{font-size:19px;transition:transform .15s;}
+.navbtn.on{color:var(--p1);}
+.navbtn.on .ic{transform:translateY(-2px) scale(1.08);}
+
+/* =====================================================================
+   SHARED WIDGETS
+   ===================================================================== */
+.section-title{font-family:'Fraunces',serif;font-weight:800;font-size:21px;margin:18px 0 10px;}
+.subtle{color:var(--ink-soft);font-size:13px;}
+.card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--radius);box-shadow:var(--shadow);}
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;}
+.hscroll::-webkit-scrollbar{display:none;}
+
+.stat-row{display:flex;gap:10px;margin:10px 0 4px;}
+.stat-pill{
+  flex:1;background:var(--card);border:1px solid var(--card-line);border-radius:16px;padding:12px 14px;
+  box-shadow:var(--shadow);
+}
+.stat-pill .n{font-family:'Fraunces',serif;font-weight:800;font-size:21px;}
+.stat-pill .l{font-size:11px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+
+.hero-card{
+  border-radius:24px;padding:22px 20px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--p1),var(--p3));margin-top:6px;
+}
+.hero-card::before{content:"";position:absolute;top:-40px;right:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.16);}
+.hero-card h2{margin:0 0 4px;font-size:22px;}
+.hero-card p{margin:0 0 14px;opacity:.92;font-size:13.5px;}
+.hero-card button{background:#fff;color:var(--p1);border:none;border-radius:12px;padding:10px 16px;font-weight:800;font-size:13px;}
+
+.continue-card{
+  min-width:220px;scroll-snap-align:start;border-radius:18px;padding:16px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#232a4f,#3a3f77);
+}
+.continue-card .tag{font-size:10.5px;opacity:.7;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.continue-card h3{font-size:16px;margin:6px 0 10px;}
+.continue-card .bar{height:5px;border-radius:4px;background:rgba(255,255,255,.2);overflow:hidden;}
+.continue-card .bar i{display:block;height:100%;background:var(--gold);}
+.continue-card button{margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;
+  border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;}
+
+.rec-card{
+  min-width:170px;scroll-snap-align:start;border-radius:16px;padding:14px;background:var(--card);
+  border:1px solid var(--card-line);box-shadow:var(--shadow);
+}
+.rec-card .ic{font-size:26px;}
+.rec-card h4{margin:8px 0 3px;font-size:14px;}
+.rec-card span{font-size:11.5px;color:var(--ink-soft);}
+
+/* =====================================================================
+   SUBJECTS SCREEN
+   ===================================================================== */
+.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;}
+.subj-card{
+  border-radius:18px;padding:16px;text-align:left;border:1px solid var(--card-line);background:var(--card);
+  box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .15s;
+}
+.subj-card:active{transform:scale(.97);}
+.subj-card.soon{opacity:.5;}
+.subj-card .ic{font-size:26px;}
+.subj-card h4{margin:9px 0 3px;font-size:15px;}
+.subj-card span{font-size:11.5px;color:var(--ink-soft);}
+.subj-card .ring{position:absolute;top:12px;right:12px;font-size:10.5px;font-weight:800;color:var(--p1);}
+
+.topic-chip-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+
+.level-toggle{display:flex;gap:8px;margin:12px 0 14px;}
+.level-toggle button{flex:1;border:1.5px solid var(--card-line);background:var(--card);color:var(--ink-soft);
+  border-radius:14px;padding:11px;font-weight:800;font-size:13.5px;}
+.level-toggle button.on{background:linear-gradient(135deg,var(--p1),var(--p3));color:#fff;border-color:transparent;}
+.track-tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;}
+.track-tabs button{
+  flex-shrink:0;border:1.5px solid var(--tc,var(--card-line));background:var(--card);color:var(--ink-soft);
+  border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;white-space:nowrap;
+}
+.track-tabs button.on{background:var(--tc,var(--p1));color:#fff;border-color:transparent;}
+.form-tabs{display:flex;gap:7px;margin:12px 0;}
+.form-tabs button{border:1.5px solid var(--card-line);background:var(--card);color:var(--ink-soft);
+  border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;}
+.form-tabs button.on{background:var(--tc,var(--p1));color:#fff;border-color:transparent;}
+.syl-topic-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--card-line);
+  background:var(--card);border-radius:14px;padding:12px 15px;text-align:left;box-shadow:var(--shadow);width:100%;margin-bottom:8px;
+}
+.syl-topic-row .stt{flex:1;font-size:13.5px;font-weight:600;min-width:0;}
+.syl-badge{font-size:10px;font-weight:800;padding:4px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.syl-badge.ready{background:#e6f9ee;color:#1f9d55;}
+.syl-badge.soon{background:var(--bg2);color:var(--ink-soft);}
+.syllabus-note{font-size:11.5px;color:var(--ink-soft);background:var(--bg2);border-radius:10px;padding:9px 12px;margin-bottom:10px;}
+.topic-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--card-line);
+  background:var(--card);border-radius:14px;padding:13px 15px;text-align:left;box-shadow:var(--shadow);
+}
+.topic-chip .lvl{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;background:var(--bg2);color:var(--ink-soft);}
+.topic-chip .lvl.easy{color:#1f9d55;background:#e4f8ea;}
+.topic-chip .lvl.medium{color:#c98a1a;background:#fdf1de;}
+.topic-chip .lvl.hard{color:#c94040;background:#fbe6e6;}
+.topic-chip .mastery{font-size:10.5px;color:var(--ink-soft);}
+
+/* =====================================================================
+   TEACHER SCREEN (AVATAR)
+   ===================================================================== */
+.teacher-stage{
+  border-radius:26px;padding:20px;margin-top:6px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#221b4d,#100c2e);min-height:520px;display:flex;flex-direction:column;
+}
+.avatar-zone{display:flex;flex-direction:column;align-items:center;padding:6px 0 4px;}
+#face-svg{filter:drop-shadow(0 14px 26px rgba(0,0,0,.35));}
+#head-g{transform-origin:110px 200px;}
+#head-g.talking{animation:headsway 2.4s ease-in-out infinite;}
+@keyframes headsway{0%,100%{transform:rotate(-1deg);}50%{transform:rotate(1.2deg);}}
+#lid-l,#lid-r{transform-origin:center;animation:blink 4.6s infinite;}
+#lid-r{animation-delay:.06s;}
+@keyframes blink{0%,92%,100%{transform:scaleY(0);}95%{transform:scaleY(1);}}
+.speak-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--p3);opacity:0;pointer-events:none;}
+.speak-ring.on{animation:ring 1.5s ease-out infinite;}
+@keyframes ring{0%{opacity:.55;transform:scale(.9);}100%{opacity:0;transform:scale(1.22);}}
+.mood-label{font-size:12px;color:rgba(255,255,255,.6);margin-top:6px;display:flex;align-items:center;gap:6px;}
+.mood-label .dotp{width:6px;height:6px;border-radius:50%;background:var(--p3);}
+
+.caption-box{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;
+  padding:14px 16px;margin:14px 0;min-height:70px;font-size:15px;line-height:1.55;
+}
+.caption-box .word{opacity:.35;}
+.caption-box .word.said{opacity:1;color:var(--gold);}
+
+.board-zone{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 16px;margin-bottom:14px;min-height:60px;}
+.board-zone .bt{font-family:'Fraunces',serif;font-weight:700;font-size:15px;margin:0 0 6px;color:var(--gold);}
+.board-zone ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.85);}
+
+.question-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;margin-bottom:12px;}
+.question-box .qtext{font-family:'Fraunces',serif;font-size:17px;font-weight:700;margin:0 0 12px;}
+.qopts{display:flex;flex-direction:column;gap:8px;}
+.qopt{
+  text-align:left;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);color:#fff;
+  border-radius:11px;padding:11px 13px;font-size:13.5px;display:flex;gap:8px;align-items:center;
+}
+.qopt b{color:var(--p3);}
+.qopt:active{transform:scale(.98);}
+.qopt.correct{background:rgba(61,220,151,.28);border-color:var(--p4);}
+.qopt.wrong{background:rgba(255,107,107,.26);border-color:var(--warn);}
+.qexplain{margin-top:10px;font-size:12.5px;color:rgba(255,255,255,.78);line-height:1.5;}
+
+.mic-row{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:10px;}
+.mic-btn{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;border:none;
+  background:linear-gradient(135deg,var(--p1),var(--p3));color:#fff;font-size:22px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 10px 22px -10px rgba(109,91,240,.7);
+}
+.mic-btn.listening{animation:mic-pulse 1.2s ease-in-out infinite;}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.5);}50%{box-shadow:0 0 0 12px rgba(255,107,107,0);}}
+.text-fallback{flex:1;display:flex;gap:8px;}
+.text-fallback input{
+  flex:1;border-radius:14px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);
+  color:#fff;padding:13px 14px;font-size:13.5px;
+}
+.text-fallback input::placeholder{color:rgba(255,255,255,.4);}
+.text-fallback button{background:var(--gold);color:#221b4d;border:none;border-radius:14px;padding:0 16px;font-weight:800;font-size:13px;}
+.quick-row{display:flex;gap:7px;overflow-x:auto;margin-top:10px;padding-bottom:2px;}
+.quick-row button{
+  flex-shrink:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;
+  border-radius:20px;padding:7px 13px;font-size:11.5px;font-weight:600;white-space:nowrap;
+}
+.mic-note{font-size:10.5px;color:rgba(255,255,255,.45);margin-top:8px;text-align:center;}
+
+/* =====================================================================
+   FEED SCREEN (vertical swipe)
+   ===================================================================== */
+#screen-feed{padding:0;}
+.feed-wrap{
+  height:100%;overflow-y:auto;scroll-snap-type:y mandatory;
+}
+.feed-card{
+  height:calc(100dvh - 150px); min-height:420px; scroll-snap-align:start;
+  display:flex;flex-direction:column;justify-content:flex-end;padding:22px 20px 26px;position:relative;color:#fff;
+  border-radius:0; overflow:hidden;
+}
+.feed-card .fc-bg{position:absolute;inset:0;z-index:0;}
+.feed-card .fc-content{position:relative;z-index:1;}
+.feed-cat{display:inline-block;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);border-radius:20px;
+  padding:5px 12px;font-size:11px;font-weight:800;margin-bottom:10px;}
+.feed-card h3{font-size:23px;margin:0 0 8px;font-family:'Fraunces',serif;}
+.feed-card p{font-size:14.5px;line-height:1.55;opacity:.92;margin:0 0 16px;max-width:34ch;}
+.feed-actions{display:flex;gap:10px;}
+.feed-actions button{border:none;border-radius:14px;padding:11px 16px;font-weight:800;font-size:13px;}
+.feed-btn-primary{background:#fff;color:#221b4d;}
+.feed-btn-ghost{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3) !important;}
+.feed-progress{position:absolute;top:16px;left:16px;right:16px;display:flex;gap:4px;z-index:2;}
+.feed-progress i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);}
+.feed-progress i.done{background:#fff;}
+.feed-q .qtext{color:#fff;font-family:'Fraunces',serif;font-size:19px;margin-bottom:14px;}
+.feed-q .qopts{display:flex;flex-direction:column;gap:8px;}
+
+/* =====================================================================
+   QUIZ OVERLAY
+   ===================================================================== */
+#screen-quiz{background:var(--bg);}
+.quiz-card{margin-top:8px;}
+.quiz-card .inner{padding:22px 20px;}
+.quiz-progress{font-size:12px;font-weight:800;color:var(--p1);margin-bottom:10px;}
+.quiz-q{font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin:0 0 16px;}
+.qopts-light{display:flex;flex-direction:column;gap:9px;}
+.qopt-light{
+  text-align:left;border:1.5px solid var(--card-line);border-radius:12px;padding:12px 14px;font-size:14px;
+  background:var(--card);color:var(--ink);
+}
+.qopt-light.correct{background:#e6f9ee;border-color:var(--p4);}
+.qopt-light.wrong{background:#fdeaea;border-color:var(--warn);}
+.qexplain-light{font-size:12.5px;color:var(--ink-soft);margin-top:12px;background:var(--bg2);padding:11px 13px;border-radius:10px;}
+.quiz-result{text-align:center;padding:30px 10px;}
+.quiz-result .score{font-family:'Fraunces',serif;font-size:48px;font-weight:800;color:var(--p1);}
+
+/* =====================================================================
+   PROGRESS SCREEN
+   ===================================================================== */
+.mastery-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--card-line);}
+.mastery-row .mi{width:34px;height:34px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.mastery-row .mt{flex:1;min-width:0;}
+.mastery-row .mt b{font-size:13.5px;display:block;}
+.mbar{height:6px;border-radius:4px;background:var(--bg2);overflow:hidden;margin-top:5px;}
+.mbar i{display:block;height:100%;background:linear-gradient(90deg,var(--p1),var(--p3));}
+.mastery-row .mp{font-size:12px;font-weight:800;color:var(--ink-soft);width:38px;text-align:right;flex-shrink:0;}
+
+/* =====================================================================
+   ONBOARDING
+   ===================================================================== */
+#onboarding{
+  position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#221b4d,#0d0a26);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;
+}
+#onboarding.hidden{display:none;}
+.ob-mark{font-size:44px;margin-bottom:14px;}
+#onboarding h1{font-family:'Fraunces',serif;font-size:26px;margin:0 0 8px;}
+#onboarding p{color:rgba(255,255,255,.75);font-size:14.5px;max-width:32ch;margin:0 0 24px;}
+.ob-subjects{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.ob-subjects button{
+  background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);color:#fff;border-radius:16px;
+  padding:16px 20px;font-size:14px;font-weight:700;display:flex;flex-direction:column;gap:6px;align-items:center;
+}
+.ob-subjects button .ic{font-size:26px;}
+.ob-subjects button:active{transform:scale(.96);}
+.ob-subjects button small{font-size:10.5px;font-weight:600;opacity:.7;}
+.ob-step2, .ob-step3{display:none;}
+.ob-step2.on, .ob-step3.on{display:flex;flex-direction:column;align-items:center;}
+.class-pill{
+  display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--card-line);
+  border-radius:30px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:var(--shadow);
+}
+
+/* animations */
+.toast{
+  position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--card);border:1px solid var(--card-line);
+  border-radius:30px;padding:10px 18px;font-size:13px;font-weight:700;box-shadow:var(--shadow);z-index:80;
+  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-6px);}
+.confetti{position:fixed;top:-10px;font-size:20px;z-index:90;animation:confetti-fall linear forwards;pointer-events:none;}
+@keyframes confetti-fall{to{transform:translateY(110vh) rotate(300deg);opacity:0;}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><div class="mark">🎓</div><div class="word">StudyBuddy</div></div>
+    <div class="top-actions">
+      <button class="class-pill" id="class-pill" title="Change your class">🎓 <span id="hdr-class">Set class</span></button>
+      <div class="icon-pill">🔥 <span id="hdr-streak">0</span></div>
+      <div class="icon-pill">✨ <span id="hdr-xp">0</span> XP</div>
+      <button class="theme-btn" id="install-btn" title="Install StudyBuddy as an app" style="display:none;">⬇️</button>
+      <button class="theme-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- HOME -->
+    <section class="screen active" id="screen-home">
+      <div class="hero-card">
+        <h2>Hey <span id="home-greet-time">there</span> 👋</h2>
+        <p>Ready to keep your streak alive? Jump back in or start something new.</p>
+        <button id="home-continue-btn">Continue learning</button>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-pill"><div class="n" id="stat-xp">0</div><div class="l">XP</div></div>
+        <div class="stat-pill"><div class="n" id="stat-streak">0</div><div class="l">Day streak</div></div>
+        <div class="stat-pill"><div class="n" id="stat-accuracy">0%</div><div class="l">Accuracy</div></div>
+      </div>
+
+      <div class="section-title">Continue learning</div>
+      <div class="hscroll" id="continue-row"></div>
+
+      <div class="section-title">Recommended for you</div>
+      <div class="hscroll" id="rec-row"></div>
+
+      <div class="section-title">For You feed</div>
+      <div class="card" style="padding:16px;display:flex;align-items:center;gap:12px;" id="home-feed-cta">
+        <div style="font-size:26px;">📱</div>
+        <div style="flex:1;">
+          <b style="font-size:14px;">Swipe through short lessons</b>
+          <div class="subtle">TikTok-style — scroll, learn, answer, repeat.</div>
+        </div>
+        <div style="font-size:18px;">›</div>
+      </div>
+    </section>
+
+    <!-- LIVE TEACHER -->
+    <section class="screen" id="screen-teacher">
+      <div class="teacher-stage">
+        <div class="avatar-zone">
+          <div style="position:relative;">
+            <div class="speak-ring" id="speak-ring"></div>
+            <svg id="face-svg" width="150" height="176" viewBox="0 0 220 240">
+              <g id="head-g">
+                <path d="M28 240 Q28 188 110 188 Q192 188 192 240 Z" fill="#3a3f77"/>
+                <rect x="82" y="150" width="56" height="46" rx="12" fill="#e3b98a"/>
+                <circle cx="110" cy="104" r="56" fill="#f0c69b"/>
+                <path d="M56 104 Q52 40 110 38 Q168 40 164 104 L164 82 Q164 46 110 44 Q56 46 56 82 Z" fill="#2b1d3d"/>
+                <path id="brow-l" d="M76 84 Q90 76 104 82" stroke="#2b1d3d" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path id="brow-r" d="M116 82 Q130 76 144 84" stroke="#2b1d3d" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <circle cx="90" cy="100" r="6" fill="#2b1d3d"/>
+                <circle cx="130" cy="100" r="6" fill="#2b1d3d"/>
+                <rect id="lid-l" x="81" y="92" width="18" height="18" fill="#f0c69b"/>
+                <rect id="lid-r" x="121" y="92" width="18" height="18" fill="#f0c69b"/>
+                <circle cx="93" cy="98" r="1.6" fill="#fff" opacity=".8"/>
+                <circle cx="133" cy="98" r="1.6" fill="#fff" opacity=".8"/>
+                <path d="M100 118 Q110 124 120 118" stroke="#c98a5c" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"/>
+                <path id="mouth" d="M90 138 Q110 138 130 138" stroke="#7a3b2e" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+              </g>
+            </svg>
+          </div>
+          <div class="mood-label"><span class="dotp"></span><span id="mood-text">Ready to teach</span></div>
+        </div>
+
+        <div class="board-zone" id="board-zone" style="display:none;">
+          <div class="bt" id="board-title"></div>
+          <ul id="board-list"></ul>
+        </div>
+
+        <div class="caption-box" id="caption-box">Tap a subject below, or press the mic and say "Explain logarithms" to get started.</div>
+
+        <div class="question-box" id="question-box" style="display:none;">
+          <p class="qtext" id="q-text"></p>
+          <div class="qopts" id="q-opts"></div>
+          <div class="qexplain" id="q-explain" style="display:none;"></div>
+        </div>
+
+        <div class="quick-row" id="quick-row">
+          <button data-say="Test me">🧪 Test me</button>
+          <button data-say="Explain that again">🔁 Explain again</button>
+          <button data-say="Give me another question">➡️ Next question</button>
+          <button data-say="Make it harder">⬆️ Harder</button>
+          <button data-say="Make it easier">⬇️ Easier</button>
+          <button data-say="What is the answer">💡 Answer</button>
+        </div>
+
+        <div class="mic-row">
+          <button class="mic-btn" id="mic-btn" title="Talk to Teacher">🎤</button>
+          <div class="text-fallback">
+            <input type="text" id="text-input" placeholder="Or type to your teacher…">
+            <button id="text-send">Send</button>
+          </div>
+        </div>
+        <div class="mic-note" id="mic-note"></div>
+      </div>
+    </section>
+
+    <!-- SUBJECTS -->
+    <section class="screen" id="screen-subjects">
+      <div class="section-title" style="margin-top:14px;" id="quick-start-title">Quick start</div>
+      <p class="subtle" id="quick-start-sub">These subjects have full interactive lessons ready right now.</p>
+      <div class="subj-grid" id="subject-grid"></div>
+      <div id="topic-panel"></div>
+
+      <div class="section-title">Full Primary, JHS &amp; SHS syllabus</div>
+      <p class="subtle">Browse every subject and topic across every class. Topics with a ready lesson open the interactive teacher; others are marked <b>coming soon</b>.</p>
+      <div class="level-toggle" id="level-toggle">
+        <button data-lvl="Primary">Primary</button>
+        <button data-lvl="JHS" class="on">JHS</button>
+        <button data-lvl="SHS">SHS</button>
+      </div>
+      <div id="track-tabs" class="track-tabs"></div>
+      <div id="syllabus-subject-grid" class="subj-grid"></div>
+      <div id="syllabus-topic-panel"></div>
+    </section>
+
+    <!-- FEED -->
+    <section class="screen" id="screen-feed">
+      <div class="feed-wrap" id="feed-wrap"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="screen" id="screen-quiz">
+      <div class="section-title" style="margin-top:14px;">Quiz</div>
+      <div class="card quiz-card"><div class="inner" id="quiz-inner">
+        <p class="subtle">Start a topic from Subjects or the Teacher to begin a quiz.</p>
+      </div></div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="screen" id="screen-progress">
+      <div class="section-title" style="margin-top:14px;">Your progress</div>
+      <div class="stat-row">
+        <div class="stat-pill"><div class="n" id="p-xp">0</div><div class="l">XP</div></div>
+        <div class="stat-pill"><div class="n" id="p-streak">0</div><div class="l">Streak</div></div>
+        <div class="stat-pill"><div class="n" id="p-acc">0%</div><div class="l">Accuracy</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-pill"><div class="n" id="p-answered">0</div><div class="l">Answered</div></div>
+        <div class="stat-pill"><div class="n" id="p-completed">0</div><div class="l">Mastered</div></div>
+      </div>
+      <div class="section-title">Topic mastery</div>
+      <div class="card" style="padding:6px 16px;" id="mastery-list"></div>
+      <div class="section-title">Syllabus coverage</div>
+      <div class="card" style="padding:16px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">🗂️</div>
+        <div class="subtle" id="syllabus-coverage-text">Loading…</div>
+      </div>
+      <div class="section-title">Reset</div>
+      <div class="card" style="padding:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span class="subtle">Clear all saved progress on this device.</span>
+        <button id="reset-btn" style="background:var(--warn);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;">Reset</button>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="bottomnav">
+    <button class="navbtn on" data-screen="home"><span class="ic">🏠</span>Home</button>
+    <button class="navbtn" data-screen="teacher"><span class="ic">🧑‍🏫</span>Teacher</button>
+    <button class="navbtn" data-screen="subjects"><span class="ic">📚</span>Subjects</button>
+    <button class="navbtn" data-screen="feed"><span class="ic">📱</span>Feed</button>
+    <button class="navbtn" data-screen="progress"><span class="ic">📊</span>Progress</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-step1">
+    <div class="ob-mark">👋</div>
+    <h1>Hey! I'm your StudyBuddy.</h1>
+    <p>I'm here to help you learn, practice and improve — one lesson at a time.</p>
+    <button id="ob-continue" style="background:var(--gold);color:#221b4d;border:none;border-radius:14px;padding:13px 22px;font-weight:800;font-size:14px;">Let's go</button>
+  </div>
+  <div class="ob-step2">
+    <div class="ob-mark">🎓</div>
+    <h1>What class are you in?</h1>
+    <p>This helps me organise everything — subjects, topics and lessons — around your level.</p>
+    <div class="ob-subjects">
+      <button data-level="Primary"><span class="ic">🧒</span>Primary<br><small>Class 1 – 6</small></button>
+      <button data-level="JHS"><span class="ic">📗</span>JHS<br><small>Form 1 – 3</small></button>
+      <button data-level="SHS"><span class="ic">📘</span>SHS<br><small>SHS 1 – 3</small></button>
+    </div>
+  </div>
+  <div class="ob-step3">
+    <div class="ob-mark" id="ob3-mark">🎯</div>
+    <h1 id="ob3-title">Which class exactly?</h1>
+    <p id="ob3-sub">Pick your exact class so lessons match your level.</p>
+    <div class="ob-subjects" id="ob3-grid"></div>
+    <button id="ob3-back" style="margin-top:18px;background:none;border:none;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:700;">← Back</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================================================
+   STUDYBUDDY — fully client-side. No API keys, no backend, no login. Just open this file.
+
+   FILE MAP (search these headers to jump around):
+   1. DATA — subjects, topics, teaching scripts, question banks   (ADD NEW LESSONS HERE)
+   2. STATE & PERSISTENCE — localStorage load/save
+   3. TEACHER ENGINE — generateTeacherResponse()                  (FUTURE AI API HOOK)
+   4. AVATAR — SVG face, mouth animation, expressions
+   5. SPEECH — SpeechRecognition (mic) + SpeechSynthesis (voice)
+   6. QUIZ ENGINE — adaptive difficulty, scoring, XP
+   7. LESSON FEED — vertical swipe cards
+   8. SUBJECTS / PROGRESS / HOME — screen renderers
+   9. NAVIGATION — screen switching, bottom nav, onboarding
+   10. INIT
+   ========================================================================================= */
+
+/* =========================================================================================
+   1. DATA — SUBJECTS, TOPICS, TEACHING SCRIPTS, QUESTION BANKS
+   To add a new subject: add a new top-level key to LESSONS.
+   To add a new topic: add a new key inside a subject's `topics` object, following the same
+   shape: { title, teach: [ ...lines ], bank: { easy:[...], medium:[...], hard:[...] } }.
+   Each question: { q, options:[4 strings], correct: indexOfCorrectOption, explain }
+   ========================================================================================= */
+const LESSONS = {
+  maths: { label:"Core Mathematics", icon:"📐", topics: {
+    numbers: { title:"Numbers", teach:[
+        "Numbers are how we count and measure everything around us — from cedis in your pocket to kilometres to school.",
+        "We group numbers into types: whole numbers, integers, and decimals. Place value tells us what each digit is worth.",
+        "For example, in 482, the 4 is worth 400, the 8 is worth 80, and the 2 is worth 2."
+      ], bank:{
+        easy:[
+          {q:"What is the value of 7 in 372?", options:["7","70","700","7000"], correct:1, explain:"7 is in the tens place, so it's worth 70."},
+          {q:"Which of these is an even number?", options:["15","22","33","41"], correct:1, explain:"22 divides exactly by 2."}
+        ], medium:[
+          {q:"Round 3,482 to the nearest hundred.", options:["3,400","3,500","3,480","3,000"], correct:1, explain:"3,482 is closer to 3,500 than 3,400."},
+          {q:"What is -8 + 5?", options:["-13","-3","3","13"], correct:1, explain:"Adding 5 to -8 moves 5 steps up, giving -3."}
+        ], hard:[
+          {q:"What is the value of 6 in 6,204,715?", options:["6","60,000","600,000","6,000,000"], correct:3, explain:"6 is in the millions place, worth 6,000,000."},
+          {q:"Which is bigger: -3 or -7?", options:["-3","-7","They are equal","Cannot tell"], correct:0, explain:"-3 is closer to zero, so it's the bigger number."}
+        ] } },
+    fractions: { title:"Fractions", teach:[
+        "A fraction shows part of a whole — like sharing a bag of gari between friends.",
+        "The top number (numerator) shows how many parts you have; the bottom (denominator) shows how many equal parts the whole is split into.",
+        "To add fractions, they need the same denominator first."
+      ], bank:{
+        easy:[
+          {q:"What is 1/2 + 1/4?", options:["2/6","3/4","1/6","2/4"], correct:1, explain:"1/2 = 2/4, so 2/4 + 1/4 = 3/4."},
+          {q:"Which fraction is bigger: 1/3 or 1/4?", options:["1/3","1/4","Equal","Cannot tell"], correct:0, explain:"Splitting into fewer parts (3) means each part is bigger."}
+        ], medium:[
+          {q:"Simplify 8/12.", options:["2/3","4/6","1/2","3/4"], correct:0, explain:"Divide top and bottom by 4: 8÷4=2, 12÷4=3."},
+          {q:"What is 2/3 × 3/4?", options:["1/2","5/7","6/12","3/2"], correct:0, explain:"Multiply straight across to get 6/12, which simplifies to 1/2."}
+        ], hard:[
+          {q:"What is 3/4 ÷ 1/2?", options:["3/8","1 1/2","2/3","3/2"], correct:1, explain:"Dividing by a fraction means multiply by its reciprocal: 3/4 × 2/1 = 1 1/2."},
+          {q:"Order from smallest: 2/5, 1/2, 3/10", options:["3/10, 2/5, 1/2","1/2, 2/5, 3/10","2/5, 1/2, 3/10","3/10, 1/2, 2/5"], correct:0, explain:"Converting to tenths: 3/10, 4/10, 5/10."}
+        ] } },
+    percentages: { title:"Percentages", teach:[
+        "Percent means 'out of 100'. It's a quick way to compare parts of different totals.",
+        "To find a percentage of a number, turn the percent into a decimal and multiply.",
+        "For example, 20% of 50 is 0.20 × 50 = 10."
+      ], bank:{
+        easy:[
+          {q:"What is 50% of 40?", options:["10","20","30","40"], correct:1, explain:"50% is half, and half of 40 is 20."},
+          {q:"What is 10% of 90?", options:["9","10","19","90"], correct:0, explain:"10% means divide by 10: 90÷10=9."}
+        ], medium:[
+          {q:"What is 25% of 160?", options:["25","40","45","60"], correct:1, explain:"25% is a quarter; 160÷4 = 40."},
+          {q:"A shirt costs GHS 80, discounted by 15%. New price?", options:["GHS 12","GHS 65","GHS 68","GHS 92"], correct:2, explain:"15% of 80 is 12; 80-12=68."}
+        ], hard:[
+          {q:"Price rose from GHS 60 to GHS 75. Percentage increase?", options:["15%","20%","25%","30%"], correct:2, explain:"Increase is 15; 15/60 × 100 = 25%."},
+          {q:"36 is what percent of 90?", options:["30%","36%","40%","45%"], correct:2, explain:"36/90 × 100 = 40%."}
+        ] } },
+    ratio: { title:"Ratio", teach:[
+        "A ratio compares two or more quantities, like mixing 2 parts cement to 3 parts sand.",
+        "Ratios can be simplified the same way fractions are, by dividing by a common factor.",
+        "If a ratio is 2:3, the total is split into 5 equal parts."
+      ], bank:{
+        easy:[
+          {q:"Simplify the ratio 10:15.", options:["1:2","2:3","3:2","5:10"], correct:1, explain:"Divide both by 5: 10÷5=2, 15÷5=3."},
+          {q:"Share GHS 20 in ratio 1:1. Each person gets?", options:["GHS 5 each","GHS 10 each","GHS 15 each","GHS 20 each"], correct:1, explain:"1:1 means split equally: 20÷2=10 each."}
+        ], medium:[
+          {q:"Share GHS 60 in ratio 2:3. What's the larger share?", options:["GHS 24","GHS 30","GHS 36","GHS 40"], correct:2, explain:"Total parts=5; each part=12; larger share=3×12=36."},
+          {q:"Ratio of boys to girls is 3:4, with 12 boys. How many girls?", options:["9","12","16","20"], correct:2, explain:"Each part = 12÷3=4, so girls = 4×4=16."}
+        ], hard:[
+          {q:"Map scale 1:50,000. A road is 4cm on the map. Real distance?", options:["2km","20km","200km","0.2km"], correct:0, explain:"4cm × 50,000 = 200,000cm = 2km."},
+          {q:"Profit shared 2:3:5, total GHS 200. Largest share?", options:["GHS 40","GHS 60","GHS 80","GHS 100"], correct:3, explain:"Total parts=10; each part=20; largest=5×20=100."}
+        ] } },
+    algebra: { title:"Algebra", teach:[
+        "Algebra uses letters to stand for unknown numbers, so we can solve problems even when we don't know a value yet.",
+        "To solve an equation like x + 5 = 12, we do the same operation to both sides to isolate x.",
+        "So x + 5 = 12 becomes x = 12 - 5, which means x = 7."
+      ], bank:{
+        easy:[
+          {q:"Solve for x: x + 3 = 10", options:["x=6","x=7","x=13","x=3"], correct:1, explain:"Subtract 3 from both sides: x=10-3=7."},
+          {q:"What is 4x when x=3?", options:["7","12","34","43"], correct:1, explain:"4×3=12."}
+        ], medium:[
+          {q:"Solve: 2x - 4 = 10", options:["x=3","x=5","x=7","x=14"], correct:2, explain:"2x=14, so x=7."},
+          {q:"Simplify: 3a + 5a", options:["8a","15a","8a²","3a5a"], correct:0, explain:"Like terms add: 3a+5a=8a."}
+        ], hard:[
+          {q:"Solve: 3(x - 2) = 15", options:["x=5","x=7","x=9","x=13"], correct:1, explain:"3x-6=15, so 3x=21, x=7."},
+          {q:"If y = 2x + 1 and x = 4, what is y?", options:["7","8","9","10"], correct:2, explain:"2×4+1=9."}
+        ] } },
+    factorisation: { title:"Factorisation", teach:[
+        "Factorising means breaking an expression into things multiplied together — the reverse of expanding brackets.",
+        "For example, 2x + 6 can be factorised as 2(x + 3), because 2 is common to both terms.",
+        "For quadratics, look for two numbers that multiply to give the last term and add to give the middle term."
+      ], bank:{
+        easy:[
+          {q:"Factorise: 3x + 9", options:["3(x+3)","3(x+9)","x(3+9)","9(x+3)"], correct:0, explain:"3 is common: 3x+9=3(x+3)."},
+          {q:"Highest common factor of 4x and 8?", options:["2","4","x","8"], correct:1, explain:"4 divides both 4x and 8 evenly."}
+        ], medium:[
+          {q:"Factorise: x² + 5x", options:["x(x+5)","5(x+x)","x²(5)","5x(x)"], correct:0, explain:"x is common: x²+5x=x(x+5)."},
+          {q:"Factorise: 6x - 9", options:["3(2x-3)","3(2x-9)","6(x-9)","9(x-6)"], correct:0, explain:"3 is common: 6x-9=3(2x-3)."}
+        ], hard:[
+          {q:"Factorise: x² + 5x + 6", options:["(x+2)(x+3)","(x+1)(x+6)","(x+6)(x-1)","(x+2)(x+4)"], correct:0, explain:"2 and 3 multiply to 6 and add to 5."},
+          {q:"Factorise: x² - 9", options:["(x-3)(x+3)","(x-9)(x+1)","(x-3)²","(x+9)(x-1)"], correct:0, explain:"Difference of squares: x²-9=(x-3)(x+3)."}
+        ] } },
+    indices: { title:"Indices", teach:[
+        "Indices (or powers) show how many times a number is multiplied by itself. 2³ means 2×2×2.",
+        "When multiplying same bases, add the powers: a² × a³ = a⁵.",
+        "Any number to the power 0 equals 1, and a negative power means 'one over' that power."
+      ], bank:{
+        easy:[
+          {q:"What is 2³?", options:["6","8","9","12"], correct:1, explain:"2×2×2=8."},
+          {q:"What is 5⁰?", options:["0","1","5","50"], correct:1, explain:"Any non-zero number to the power 0 is 1."}
+        ], medium:[
+          {q:"Simplify: a³ × a²", options:["a⁵","a⁶","2a⁵","a¹"], correct:0, explain:"Add the powers: 3+2=5."},
+          {q:"Simplify: x⁵ ÷ x²", options:["x²","x³","x⁷","x¹⁰"], correct:1, explain:"Subtract the powers: 5-2=3."}
+        ], hard:[
+          {q:"What is 4^(-2)?", options:["-8","-16","1/8","1/16"], correct:3, explain:"4^(-2) = 1/4² = 1/16."},
+          {q:"Simplify: (a²)³", options:["a⁵","a⁶","a⁹","2a⁶"], correct:1, explain:"Multiply the powers: 2×3=6."}
+        ] } },
+    logarithms: { title:"Logarithms", teach:[
+        "A logarithm asks: what power do we need to raise a number to, to get another number?",
+        "log₂(8) asks: 2 to what power gives 8? Since 2³=8, log₂(8)=3.",
+        "Logarithms and powers undo each other, just like addition and subtraction."
+      ], bank:{
+        easy:[
+          {q:"log₂(8) = ?", options:["2","3","4","8"], correct:1, explain:"2³=8, so log₂(8)=3."},
+          {q:"log₁₀(100) = ?", options:["1","2","10","100"], correct:1, explain:"10²=100, so log₁₀(100)=2."}
+        ], medium:[
+          {q:"log₃(9) = ?", options:["1","2","3","9"], correct:1, explain:"3²=9, so log₃(9)=2."},
+          {q:"log₅(1) = ?", options:["0","1","5","Undefined"], correct:0, explain:"Any base to the power 0 is 1, so log₅(1)=0."}
+        ], hard:[
+          {q:"If log₂(x) = 5, what is x?", options:["10","16","25","32"], correct:3, explain:"2⁵=32, so x=32."},
+          {q:"log₁₀(1000) = ?", options:["2","3","10","100"], correct:1, explain:"10³=1000, so log₁₀(1000)=3."}
+        ] } },
+    profitloss: { title:"Profit and Loss", teach:[
+        "Profit happens when you sell something for more than it cost you; loss is when you sell for less.",
+        "Profit = Selling Price − Cost Price. If the answer is negative, it's a loss.",
+        "Percentage profit or loss is always calculated based on the cost price."
+      ], bank:{
+        easy:[
+          {q:"Buys a shirt for GHS 20, sells for GHS 25. Profit?", options:["GHS 3","GHS 5","GHS 20","GHS 45"], correct:1, explain:"Profit = 25 - 20 = GHS 5."},
+          {q:"Cost GHS 50, sells for GHS 40. Profit or loss?", options:["Profit","Loss","Neither","Cannot tell"], correct:1, explain:"Selling for less than cost means a loss."}
+        ], medium:[
+          {q:"Cost GHS 80, sells for GHS 100. Percentage profit?", options:["20%","25%","30%","80%"], correct:1, explain:"Profit=20; 20/80×100=25%."},
+          {q:"Phone bought GHS 400, sold at 10% loss. Selling price?", options:["GHS 360","GHS 390","GHS 410","GHS 440"], correct:0, explain:"10% of 400 is 40; 400-40=360."}
+        ], hard:[
+          {q:"Item sold for GHS 138 at 15% profit. Cost price?", options:["GHS 117","GHS 120","GHS 123","GHS 150"], correct:1, explain:"Cost × 1.15 = 138, so cost = 120."},
+          {q:"Trader loses 20%, sells for GHS 96. Cost price?", options:["GHS 100","GHS 110","GHS 115","GHS 120"], correct:3, explain:"Cost × 0.8 = 96, so cost = 120."}
+        ] } },
+    geometry: { title:"Geometry", teach:[
+        "Geometry is the study of shapes, sizes, angles, and space.",
+        "Angles on a straight line always add up to 180°; angles around a point add up to 360°.",
+        "Area of a rectangle is length × width; area of a triangle is half base × height."
+      ], bank:{
+        easy:[
+          {q:"How many degrees are in a right angle?", options:["45°","90°","180°","360°"], correct:1, explain:"A right angle is exactly 90°."},
+          {q:"Area of a rectangle 4cm by 5cm?", options:["9cm²","18cm²","20cm²","24cm²"], correct:2, explain:"Area = length × width = 4×5=20cm²."}
+        ], medium:[
+          {q:"Two angles on a straight line are 70° and x. Find x.", options:["90°","100°","110°","120°"], correct:2, explain:"Angles on a line add to 180°: 180-70=110°."},
+          {q:"Area of a triangle, base 8cm, height 5cm?", options:["13cm²","20cm²","30cm²","40cm²"], correct:1, explain:"Area = ½×base×height = 20cm²."}
+        ], hard:[
+          {q:"Circle radius 7cm. Circumference? (π≈22/7)", options:["22cm","44cm","49cm","154cm"], correct:1, explain:"Circumference=2πr=44cm."},
+          {q:"Interior angles of a triangle sum to?", options:["90°","180°","270°","360°"], correct:1, explain:"Triangle interior angles always sum to 180°."}
+        ] } },
+    probability: { title:"Probability", teach:[
+        "Probability measures how likely something is to happen, from 0 (impossible) to 1 (certain).",
+        "Probability = number of favourable outcomes ÷ total possible outcomes.",
+        "For example, the chance of rolling a 4 on a fair die is 1 out of 6."
+      ], bank:{
+        easy:[
+          {q:"Probability of flipping heads on a coin?", options:["1/4","1/3","1/2","1"], correct:2, explain:"2 equally likely outcomes, so heads is 1/2."},
+          {q:"Bag has 1 red, 1 blue ball. Probability of red?", options:["1/4","1/2","1","0"], correct:1, explain:"1 red out of 2 total = 1/2."}
+        ], medium:[
+          {q:"Probability of rolling a 4 on a fair die?", options:["1/2","1/3","1/6","1/4"], correct:2, explain:"One 4 out of 6 faces: 1/6."},
+          {q:"Bag has 3 red, 2 blue. Probability of blue?", options:["2/5","3/5","1/2","2/3"], correct:0, explain:"2 blue out of 5 total = 2/5."}
+        ], hard:[
+          {q:"Two coins flipped. Probability of two heads?", options:["1/2","1/3","1/4","1/8"], correct:2, explain:"4 outcomes total; only 1 is HH, so 1/4."},
+          {q:"Probability of rolling an even number on a die?", options:["1/6","1/3","1/2","2/3"], correct:2, explain:"2,4,6 are even — 3 out of 6 = 1/2."}
+        ] } },
+    simultaneous: { title:"Simultaneous Equations", teach:[
+        "Simultaneous equations are two or more equations with the same unknowns, solved together at the same time.",
+        "One method is substitution: solve one equation for a variable, then substitute it into the other equation.",
+        "Another method is elimination: add or subtract the equations to cancel out one variable."
+      ], bank:{
+        easy:[
+          {q:"What are 'simultaneous equations'?", options:["A single equation with one unknown","Two or more equations solved together","An equation with no solution","An equation with a fraction"], correct:1, explain:"Simultaneous equations share unknowns and are solved together."},
+          {q:"If x + y = 10 and x = 4, what is y?", options:["4","6","10","14"], correct:1, explain:"y = 10 - 4 = 6."}
+        ], medium:[
+          {q:"Solve: x + y = 7 and x - y = 1. What is x?", options:["3","4","5","6"], correct:1, explain:"Adding the equations: 2x=8, so x=4."},
+          {q:"In the elimination method, why add or subtract equations?", options:["To make them longer","To cancel out one variable","To change the unknowns","To create more equations"], correct:1, explain:"Adding/subtracting can eliminate one variable, leaving a simpler equation."}
+        ], hard:[
+          {q:"Solve: 2x + y = 11 and x - y = 1. What is x?", options:["3","4","5","6"], correct:1, explain:"Adding the equations: 3x=12, so x=4."},
+          {q:"Solve: 3x + 2y = 16 and x = y + 2. What is y?", options:["1","2","3","4"], correct:1, explain:"Substitute x=y+2: 3(y+2)+2y=16 → 5y+6=16 → y=2."}
+        ] } }
+  }},
+  english: { label:"English", icon:"📖", topics: {
+    grammar: { title:"Grammar", teach:[
+        "Grammar is the set of rules that helps us build clear, correct sentences.",
+        "Every sentence needs a subject (who/what) and a verb (the action or state).",
+        "Nouns name things, verbs show action, adjectives describe, and adverbs describe verbs."
+      ], bank:{
+        easy:[
+          {q:"Which word is a noun in 'The dog ran fast'?", options:["The","dog","ran","fast"], correct:1, explain:"'Dog' names a thing — that makes it a noun."},
+          {q:"Which word is the verb in 'She sings beautifully'?", options:["She","sings","beautifully","the"], correct:1, explain:"'Sings' shows the action."}
+        ], medium:[
+          {q:"Correct form: 'He ___ to school every day.'", options:["go","goes","going","gone"], correct:1, explain:"Third person singular takes -s: 'goes'."},
+          {q:"Which sentence uses the correct past tense?", options:["She go yesterday","She goes yesterday","She went yesterday","She going yesterday"], correct:2, explain:"'Went' is the correct past tense of 'go'."}
+        ], hard:[
+          {q:"Identify the adverb: 'He quickly finished his homework.'", options:["He","quickly","finished","homework"], correct:1, explain:"'Quickly' describes how he finished — an adverb."},
+          {q:"Which sentence is grammatically correct?", options:["Neither of the boys were late","Neither of the boys was late","Neither of the boys is were late","Neither the boys was late"], correct:1, explain:"'Neither' takes a singular verb: 'was'."}
+        ] } },
+    comprehension: { title:"Comprehension", teach:[
+        "Comprehension means understanding what you read — not just the words, but the meaning behind them.",
+        "Look for the main idea, key details, and how ideas connect to each other.",
+        "Answering comprehension questions means going back into the text to find evidence, not just guessing."
+      ], bank:{
+        easy:[
+          {q:"'Ama was tired, so she went to bed early.' Why did Ama go to bed?", options:["She was hungry","She was tired","She was late","She was happy"], correct:1, explain:"The text directly says she was tired."},
+          {q:"What is the 'main idea' of a passage?", options:["A small detail","The central point being made","The last sentence only","A character's name"], correct:1, explain:"The main idea is the central point the passage is about."}
+        ], medium:[
+          {q:"'Despite the rain, the match continued.' What does 'despite' suggest?", options:["Because of","In spite of","After","Instead of"], correct:1, explain:"'Despite' means 'in spite of'."},
+          {q:"What is an 'inference' in reading?", options:["A fact directly stated","A conclusion drawn from clues in the text","The title of the passage","A dictionary definition"], correct:1, explain:"Inference means figuring something out from clues."}
+        ], hard:[
+          {q:"Which skill helps you understand an author's purpose?", options:["Skimming only the title","Identifying tone and word choice","Counting the paragraphs","Ignoring the introduction"], correct:1, explain:"Tone and word choice often reveal why the author is writing."},
+          {q:"A passage ends hopeful despite describing hardship. This shows:", options:["Contrast","Repetition","Irrelevance","Confusion"], correct:0, explain:"Contrasting hardship with hope is a deliberate contrast."}
+        ] } },
+    vocabulary: { title:"Vocabulary", teach:[
+        "Vocabulary is your bank of known words — the bigger it is, the better you can express and understand ideas.",
+        "You can often guess a word's meaning from context — the words and sentences around it.",
+        "Learning synonyms (similar meaning) and antonyms (opposite meaning) helps you use more precise words."
+      ], bank:{
+        easy:[
+          {q:"Synonym for 'happy'?", options:["Sad","Joyful","Angry","Tired"], correct:1, explain:"'Joyful' means the same as 'happy'."},
+          {q:"Antonym for 'big'?", options:["Large","Huge","Small","Tall"], correct:2, explain:"'Small' is the opposite of 'big'."}
+        ], medium:[
+          {q:"What does 'reluctant' mean?", options:["Eager","Unwilling","Confident","Careless"], correct:1, explain:"'Reluctant' means unwilling or hesitant."},
+          {q:"Synonym for 'enormous'?", options:["Tiny","Huge","Quiet","Fast"], correct:1, explain:"'Enormous' and 'huge' both mean very large."}
+        ], hard:[
+          {q:"What does 'ambiguous' mean?", options:["Very clear","Open to more than one interpretation","Extremely loud","Completely false"], correct:1, explain:"'Ambiguous' means unclear or open to multiple meanings."},
+          {q:"Opposite of 'generous'?", options:["Kind","Stingy","Wealthy","Friendly"], correct:1, explain:"'Stingy' is the opposite of generous."}
+        ] } },
+    sentence: { title:"Sentence Construction", teach:[
+        "A good sentence has a clear subject and verb, and expresses a complete thought.",
+        "You can combine short sentences using conjunctions like 'and', 'but', or 'because'.",
+        "Varying your sentence length and structure makes your writing more interesting to read."
+      ], bank:{
+        easy:[
+          {q:"Which is a complete sentence?", options:["Running fast.","The boy ran fast.","Fast boy the.","Boy running."], correct:1, explain:"It has a subject and a verb — a complete thought."},
+          {q:"Which word can join two sentences?", options:["Quickly","And","Happy","Never"], correct:1, explain:"'And' is a conjunction used to join ideas."}
+        ], medium:[
+          {q:"Combine using 'because': 'It was raining. We stayed indoors.'", options:["We stayed indoors because it was raining.","Because we stayed indoors it was raining.","It raining because we stayed indoors.","Raining we stayed because indoors."], correct:0, explain:"This keeps the cause-and-effect order clear."},
+          {q:"Which sentence is a run-on?", options:["She likes tea. He likes coffee.","She likes tea he likes coffee.","She likes tea, and he likes coffee.","She likes tea; he likes coffee."], correct:1, explain:"Joining two full sentences with no punctuation creates a run-on."}
+        ], hard:[
+          {q:"Which sentence uses a subordinate clause correctly?", options:["Although it was late, we kept studying.","Although it was late we kept, studying.","It was late although, we kept studying.","We kept, studying although it was late."], correct:0, explain:"The clause is correctly set off with a comma."},
+          {q:"Best way to avoid a sentence fragment?", options:["End with a comma","Always use short words","Have a subject and verb expressing a complete thought","Avoid conjunctions entirely"], correct:2, explain:"A fragment is missing a subject, verb, or complete thought."}
+        ] } },
+    figuresofspeech: { title:"Figures of Speech", teach:[
+        "Figures of speech are creative ways of using language beyond its literal meaning, to make writing more vivid and expressive.",
+        "A simile compares two things using 'like' or 'as' — 'brave as a lion.' A metaphor compares directly, without 'like' or 'as' — 'he is a lion in battle.'",
+        "Other figures of speech include personification (giving human qualities to objects) and hyperbole (deliberate exaggeration)."
+      ], bank:{
+        easy:[
+          {q:"'Her smile was as bright as the sun.' What figure of speech is this?", options:["Metaphor","Simile","Personification","Hyperbole"], correct:1, explain:"It uses 'as' to compare two things — that's a simile."},
+          {q:"'Time is money.' What figure of speech is this?", options:["Simile","Metaphor","Onomatopoeia","Alliteration"], correct:1, explain:"It directly compares time to money without 'like' or 'as' — a metaphor."}
+        ], medium:[
+          {q:"'The wind whispered through the trees.' What figure of speech is this?", options:["Simile","Hyperbole","Personification","Metaphor"], correct:2, explain:"Giving the wind a human ability (whispering) is personification."},
+          {q:"'I've told you a million times!' What figure of speech is this?", options:["Simile","Hyperbole","Metaphor","Personification"], correct:1, explain:"This is an obvious exaggeration — a hyperbole."}
+        ], hard:[
+          {q:"Main difference between a simile and a metaphor?", options:["There is no difference","A simile uses 'like' or 'as'; a metaphor states the comparison directly","A metaphor is always about animals","A simile is longer than a metaphor"], correct:1, explain:"Similes use comparison words; metaphors state the comparison as fact."},
+          {q:"Which figure of speech gives human qualities to non-human things?", options:["Simile","Metaphor","Personification","Hyperbole"], correct:2, explain:"Personification attributes human traits to objects, animals, or ideas."}
+        ] } }
+  }},
+  science: { label:"Science", icon:"🔬", topics: {
+    cells: { title:"Cells", teach:[
+        "Cells are the basic building blocks of all living things — from a tiny bacterium to your whole body.",
+        "Every cell has a cell membrane (the boundary), cytoplasm (jelly-like fluid), and genetic material inside.",
+        "Plant cells have extra parts like a cell wall and chloroplasts that animal cells don't have."
+      ], bank:{
+        easy:[
+          {q:"What is the basic unit of life?", options:["Organ","Cell","Tissue","Atom"], correct:1, explain:"The cell is the smallest unit that carries out life processes."},
+          {q:"What controls what goes in and out of a cell?", options:["Nucleus","Cell membrane","Cytoplasm","Chloroplast"], correct:1, explain:"The cell membrane controls what enters and leaves."}
+        ], medium:[
+          {q:"Which part contains genetic material (DNA)?", options:["Cytoplasm","Cell wall","Nucleus","Membrane"], correct:2, explain:"The nucleus stores and protects the cell's DNA."},
+          {q:"Found in plant cells but not animal cells?", options:["Nucleus","Cell membrane","Cell wall","Cytoplasm"], correct:2, explain:"Plant cells have a rigid cell wall; animal cells don't."}
+        ], hard:[
+          {q:"Which organelle carries out photosynthesis?", options:["Mitochondria","Chloroplast","Nucleus","Ribosome"], correct:1, explain:"Chloroplasts contain chlorophyll for capturing light."},
+          {q:"'Powerhouse of the cell' refers to:", options:["Nucleus","Chloroplast","Mitochondria","Vacuole"], correct:2, explain:"Mitochondria release energy from food through respiration."}
+        ] } },
+    humanbody: { title:"Human Body", teach:[
+        "Your body is made of systems that work together, like the digestive, circulatory, and respiratory systems.",
+        "The circulatory system, powered by the heart, pumps blood carrying oxygen and nutrients around your body.",
+        "The digestive system breaks down food into nutrients your body can use for energy and growth."
+      ], bank:{
+        easy:[
+          {q:"Which organ pumps blood around the body?", options:["Lungs","Heart","Stomach","Kidney"], correct:1, explain:"The heart is the pump of the circulatory system."},
+          {q:"Which organs help you breathe?", options:["Lungs","Liver","Kidneys","Stomach"], correct:0, explain:"The lungs take in oxygen and release carbon dioxide."}
+        ], medium:[
+          {q:"Main job of the digestive system?", options:["Pump blood","Break down food for nutrients","Filter air","Send electrical signals"], correct:1, explain:"Digestion breaks food into usable nutrients."},
+          {q:"Which organ filters waste from the blood?", options:["Heart","Kidney","Lungs","Brain"], correct:1, explain:"Kidneys filter waste to form urine."}
+        ], hard:[
+          {q:"What carries oxygen in the blood?", options:["White blood cells","Platelets","Red blood cells","Plasma alone"], correct:2, explain:"Red blood cells contain haemoglobin, which carries oxygen."},
+          {q:"Which system sends electrical signals in the body?", options:["Digestive system","Nervous system","Skeletal system","Circulatory system"], correct:1, explain:"The nervous system controls the body with electrical signals."}
+        ] } },
+    photosynthesis: { title:"Photosynthesis", teach:[
+        "Photosynthesis is how plants make their own food using sunlight.",
+        "Plants take in carbon dioxide and water, and using light energy, turn them into glucose (food) and oxygen.",
+        "This process mostly happens in the leaves, inside chloroplasts containing chlorophyll."
+      ], bank:{
+        easy:[
+          {q:"What do plants need for photosynthesis?", options:["Sunlight, water, carbon dioxide","Only soil","Only water","Sunlight and soil only"], correct:0, explain:"Photosynthesis needs sunlight, water, and carbon dioxide together."},
+          {q:"What gas do plants release during photosynthesis?", options:["Carbon dioxide","Oxygen","Nitrogen","Hydrogen"], correct:1, explain:"Oxygen is released as a byproduct."}
+        ], medium:[
+          {q:"Where does most photosynthesis happen?", options:["Roots","Leaves","Stem","Flowers"], correct:1, explain:"Leaves are packed with chloroplasts."},
+          {q:"What pigment captures light energy?", options:["Chlorophyll","Haemoglobin","Melanin","Carotene"], correct:0, explain:"Chlorophyll absorbs light energy in chloroplasts."}
+        ], hard:[
+          {q:"Main product of photosynthesis used for energy?", options:["Water","Oxygen","Glucose","Carbon dioxide"], correct:2, explain:"Glucose is the sugar plants make and use as food."},
+          {q:"Why is photosynthesis important for animals?", options:["It produces the oxygen animals breathe","It produces water for drinking","It removes minerals from soil","It has no effect on animals"], correct:0, explain:"Photosynthesis releases oxygen animals need to breathe."}
+        ] } },
+    forces: { title:"Forces", teach:[
+        "A force is a push or pull that can change how an object moves, its speed, or its shape.",
+        "Gravity is a force that pulls objects toward the Earth.",
+        "Friction is a force that resists motion between two surfaces touching each other."
+      ], bank:{
+        easy:[
+          {q:"What force pulls objects toward the Earth?", options:["Friction","Gravity","Magnetism","Tension"], correct:1, explain:"Gravity is the force pulling objects toward Earth."},
+          {q:"A force is best described as a:", options:["Push or pull","Type of energy","Colour","Sound wave"], correct:0, explain:"Forces are pushes or pulls acting on objects."}
+        ], medium:[
+          {q:"What force slows a ball rolling on grass?", options:["Gravity","Friction","Magnetism","Tension"], correct:1, explain:"Friction resists motion, slowing the ball."},
+          {q:"You push a box and nothing moves. What does that tell you?", options:["No force was applied","The forces are balanced","The box has no mass","Gravity is off"], correct:1, explain:"If nothing moves, opposing forces balance your push."}
+        ], hard:[
+          {q:"Newton's first law: an object at rest stays at rest unless:", options:["It gets heavier","A force acts on it","Time passes","It changes colour"], correct:1, explain:"Objects stay still or keep moving unless a force changes that."},
+          {q:"Which force allows a rocket to lift off?", options:["Friction only","Thrust from burning fuel","Gravity pulling up","Magnetic force"], correct:1, explain:"Thrust pushes the rocket upward against gravity."}
+        ] } },
+    energy: { title:"Energy", teach:[
+        "Energy is the ability to do work or cause change — it can't be created or destroyed, only transformed.",
+        "There are many forms: kinetic (movement), potential (stored), heat, light, and chemical energy.",
+        "For example, a battery stores chemical energy that becomes electrical energy in a torch."
+      ], bank:{
+        easy:[
+          {q:"Energy of movement is called:", options:["Potential energy","Kinetic energy","Chemical energy","Nuclear energy"], correct:1, explain:"Kinetic energy is the energy of motion."},
+          {q:"A stretched rubber band stores what energy?", options:["Kinetic energy","Potential energy","Light energy","Sound energy"], correct:1, explain:"Stretching stores potential (elastic) energy."}
+        ], medium:[
+          {q:"Energy transformation in a torch?", options:["Light to chemical","Chemical to electrical to light","Heat to sound","Kinetic to chemical"], correct:1, explain:"Battery's chemical energy becomes electrical, then light."},
+          {q:"Which law says energy cannot be created or destroyed?", options:["Newton's Law","Law of Conservation of Energy","Law of Gravity","Ohm's Law"], correct:1, explain:"Energy only changes form, never created or destroyed."}
+        ], hard:[
+          {q:"A ball atop a hill has mostly what energy?", options:["Kinetic energy","Potential energy","Sound energy","Chemical energy"], correct:1, explain:"Its height gives it gravitational potential energy."},
+          {q:"Rolling down, potential energy mostly converts to:", options:["Chemical energy","Kinetic energy","Nuclear energy","Light energy"], correct:1, explain:"Height converts to motion as it rolls."}
+        ] } },
+    matter: { title:"Matter", teach:[
+        "Matter is anything that has mass and takes up space — solids, liquids, and gases are all matter.",
+        "In solids, particles are tightly packed; in liquids, they can move past each other; in gases, they spread far apart.",
+        "Matter can change state through heating or cooling, like ice melting into water."
+      ], bank:{
+        easy:[
+          {q:"Which of these is a solid?", options:["Water","Air","Ice","Steam"], correct:2, explain:"Ice is water in its solid state."},
+          {q:"What happens to ice when heated?", options:["It becomes gas directly","It melts into liquid water","It disappears","It becomes heavier"], correct:1, explain:"Heating ice causes it to melt into liquid water."}
+        ], medium:[
+          {q:"In which state are particles most spread out?", options:["Solid","Liquid","Gas","Same in all states"], correct:2, explain:"Gas particles spread far apart and move freely."},
+          {q:"Liquid turning into a gas is called:", options:["Freezing","Melting","Evaporation","Condensation"], correct:2, explain:"Evaporation is liquid changing to gas."}
+        ], hard:[
+          {q:"Gas turning directly into a solid is called:", options:["Sublimation","Deposition","Evaporation","Condensation"], correct:1, explain:"Deposition is gas changing directly to solid."},
+          {q:"Why can gases be compressed easily but not solids?", options:["Gas particles are far apart with space between them","Gas has no particles","Solids have no mass","Gases are heavier than solids"], correct:0, explain:"Spread-out gas particles leave room to be pushed closer."}
+        ] } },
+    atomicstructure: { title:"Atomic Structure", teach:[
+        "Everything is made of atoms — the tiny building blocks of matter.",
+        "An atom has a nucleus (containing protons and neutrons) at its centre, with electrons moving around it.",
+        "The number of protons determines which element it is — this is called the atomic number."
+      ], bank:{
+        easy:[
+          {q:"What is at the centre of an atom?", options:["Electrons","The nucleus","Empty space","Protons only"], correct:1, explain:"The nucleus, containing protons and neutrons, sits at the atom's centre."},
+          {q:"Which particle has a negative charge?", options:["Proton","Neutron","Electron","Nucleus"], correct:2, explain:"Electrons carry a negative charge and orbit the nucleus."}
+        ], medium:[
+          {q:"What determines the atomic number of an element?", options:["Number of electrons only","Number of neutrons","Number of protons","Total mass"], correct:2, explain:"The atomic number equals the number of protons in the nucleus."},
+          {q:"Which particle has no electric charge?", options:["Proton","Electron","Neutron","Ion"], correct:2, explain:"Neutrons are neutral — they carry no charge."}
+        ], hard:[
+          {q:"An atom that loses an electron becomes:", options:["A neutral atom","A positive ion (cation)","A negative ion (anion)","A different element"], correct:1, explain:"Losing a negative electron leaves the atom with a positive charge overall."},
+          {q:"Isotopes of an element have the same protons but different numbers of:", options:["Electrons","Neutrons","Protons","Nuclei"], correct:1, explain:"Isotopes vary in neutron count, changing mass but not identity."}
+        ] } }
+  }},
+  business: { label:"Business Studies", icon:"💼", topics: {
+    accounting: { title:"Accounting Concepts", teach:[
+        "Accounting is how businesses record and track money coming in and going out.",
+        "The basic accounting equation is: Assets = Liabilities + Owner's Equity — everything a business owns is either borrowed or owned outright.",
+        "Every transaction is recorded twice (double entry) — once as a debit, once as a credit — so the equation always stays balanced."
+      ], bank:{
+        easy:[
+          {q:"What does 'Assets' mean in accounting?", options:["Money owed to others","Things a business owns","Owner's personal debts","Yearly profit only"], correct:1, explain:"Assets are what the business owns — cash, equipment, stock, etc."},
+          {q:"What is the basic accounting equation?", options:["Assets = Liabilities + Equity","Profit = Sales - Costs","Assets = Profit - Loss","Equity = Liabilities only"], correct:0, explain:"This equation must always balance in accounting."}
+        ], medium:[
+          {q:"Assets GHS 10,000, liabilities GHS 4,000. What is equity?", options:["GHS 4,000","GHS 6,000","GHS 10,000","GHS 14,000"], correct:1, explain:"Equity = Assets - Liabilities = 10,000 - 4,000 = 6,000."},
+          {q:"What is a 'liability' in accounting?", options:["Something a business owns","Something a business owes","Business profit","Business revenue"], correct:1, explain:"A liability is a debt or obligation the business owes."}
+        ], hard:[
+          {q:"Which transactions are recorded as both a debit and credit?", options:["Nothing — only one entry is made","Every transaction, under double-entry accounting","Only cash transactions","Only year-end transactions"], correct:1, explain:"Double-entry accounting records every transaction twice to stay balanced."},
+          {q:"A business buys equipment with cash. What happens to total assets?", options:["Total assets increase","Total assets decrease","Total assets stay the same","Total assets become liabilities"], correct:2, explain:"Cash decreases but equipment increases by the same amount — no change overall."}
+        ] } },
+    demandsupply: { title:"Demand and Supply", teach:[
+        "Demand is how much of something people want to buy at a given price; supply is how much producers are willing to sell.",
+        "As price rises, demand usually falls and supply usually rises — the law of demand and supply.",
+        "The point where demand and supply meet is called the equilibrium price — where buyers and sellers agree."
+      ], bank:{
+        easy:[
+          {q:"As price increases, quantity demanded usually:", options:["Increases","Decreases","Stays the same","Becomes zero"], correct:1, explain:"Higher prices usually reduce how much people want to buy."},
+          {q:"As price increases, quantity supplied usually:", options:["Increases","Decreases","Stays the same","Becomes zero"], correct:0, explain:"Higher prices encourage producers to supply more."}
+        ], medium:[
+          {q:"What is 'equilibrium price'?", options:["The highest price a seller can charge","The price where quantity demanded equals quantity supplied","A government-set minimum price","The average price over a year"], correct:1, explain:"Equilibrium is where buyers and sellers agree."},
+          {q:"If the price of rice falls, quantity demanded usually:", options:["Falls","Rises","Stays the same","Becomes negative"], correct:1, explain:"Lower prices usually increase how much people want to buy."}
+        ], hard:[
+          {q:"Demand rises sharply while supply stays the same. Price will likely:", options:["Fall","Rise","Stay exactly the same","Become zero"], correct:1, explain:"More demand chasing the same supply pushes price up."},
+          {q:"A price ceiling is set below equilibrium. Likely result?", options:["A surplus of goods","A shortage of goods","No change at all","Prices rise further"], correct:1, explain:"Below equilibrium, more people want to buy than sellers will supply, causing a shortage."}
+        ] } }
+  }},
+  arts: { label:"Arts & Humanities", icon:"🎨", topics: {
+    colourtheory: { title:"Colour Theory", teach:[
+        "Colour theory explains how colours relate to each other and how to combine them effectively in art and design.",
+        "The three primary colours — red, yellow, and blue — can't be made by mixing other colours, but combine to make secondary colours like green, orange, and purple.",
+        "Warm colours (red, orange, yellow) feel energetic, while cool colours (blue, green, purple) feel calm."
+      ], bank:{
+        easy:[
+          {q:"Which of these is a primary colour?", options:["Green","Orange","Red","Purple"], correct:2, explain:"Red is one of the three primary colours, along with yellow and blue."},
+          {q:"Mixing blue and yellow makes which colour?", options:["Purple","Green","Orange","Brown"], correct:1, explain:"Blue and yellow combine to make green."}
+        ], medium:[
+          {q:"Which of these is a 'warm' colour?", options:["Blue","Green","Orange","Purple"], correct:2, explain:"Orange is a warm colour, alongside red and yellow."},
+          {q:"What are secondary colours made from?", options:["Mixing two primary colours","Mixing black and white","Using only one colour","Mixing all colours together"], correct:0, explain:"Secondary colours come from mixing two primaries."}
+        ], hard:[
+          {q:"What are 'complementary colours'?", options:["Colours next to each other on the wheel","Colours opposite each other on the colour wheel","Only shades of the same colour","Colours that can't be mixed"], correct:1, explain:"Complementary colours sit opposite each other, creating strong contrast."},
+          {q:"What effect do mostly cool colours usually create?", options:["Energetic and loud","Calm and soothing","Confusing and busy","No effect at all"], correct:1, explain:"Cool colours (blues, greens) tend to feel calm and relaxing."}
+        ] } },
+    elementsofart: { title:"Elements of Art", teach:[
+        "The elements of art are the basic building blocks artists use: line, shape, colour, texture, form, space, and value.",
+        "A line can be straight, curved, thick or thin, and it can lead the viewer's eye around an artwork.",
+        "Shape is 2D and flat, while form suggests three-dimensional depth, like a sphere or cube."
+      ], bank:{
+        easy:[
+          {q:"Which of these is an element of art?", options:["Line","Homework","Rent","Weather"], correct:0, explain:"Line is one of the basic elements of art."},
+          {q:"What best describes 'shape' in art?", options:["A 3D object","A flat, 2D area","A type of paint","A texture only"], correct:1, explain:"Shape refers to flat, two-dimensional areas."}
+        ], medium:[
+          {q:"Difference between shape and form?", options:["There is no difference","Shape is 2D, form suggests 3D depth","Form is always a circle","Shape only applies to paintings"], correct:1, explain:"Shape is flat; form gives the illusion of three-dimensional depth."},
+          {q:"What does 'texture' refer to in art?", options:["The colour of an object","How a surface looks or feels","The size of the artwork","The artist's name"], correct:1, explain:"Texture describes surface quality — rough, smooth, bumpy, etc."}
+        ], hard:[
+          {q:"What is 'value' in the elements of art?", options:["The price of the artwork","The lightness or darkness of a colour","The artist's opinion","The size of the canvas"], correct:1, explain:"Value refers to how light or dark a colour or tone is."},
+          {q:"How can 'line' create movement in an artwork?", options:["By using only straight lines","By guiding the viewer's eye across the piece","Lines cannot create movement","By avoiding lines entirely"], correct:1, explain:"Curving or directional lines can lead the eye and suggest motion."}
+        ] } },
+    government: { title:"Types of Government", teach:[
+        "Government is the system that makes and enforces laws and manages a country's affairs.",
+        "There are different types, including democracy (rule by the people), monarchy (rule by a king or queen), and dictatorship (rule by one person with total power).",
+        "In a democracy like Ghana, power is usually divided among the executive, legislature, and judiciary to prevent any one group having too much control."
+      ], bank:{
+        easy:[
+          {q:"What is 'democracy'?", options:["Rule by one king","Rule by the people, usually through elected representatives","Rule by the military only","No government at all"], correct:1, explain:"Democracy means government by the people, typically through elections."},
+          {q:"Who usually rules in a monarchy?", options:["Elected officials","A king or queen","The military","A group of judges"], correct:1, explain:"A monarchy is ruled by a king, queen, or royal family."}
+        ], medium:[
+          {q:"What is the main role of the judiciary?", options:["Making laws","Interpreting and applying laws","Collecting taxes","Running elections only"], correct:1, explain:"The judiciary interprets laws and settles legal disputes."},
+          {q:"Why separate government into different branches?", options:["To make things confusing","To prevent any one branch having too much control","Because tradition requires it","To slow all decisions"], correct:1, explain:"Separation of powers helps prevent abuse of power."}
+        ], hard:[
+          {q:"In Ghana's system, which branch makes the laws?", options:["The Executive","The Legislature (Parliament)","The Judiciary","The Military"], correct:1, explain:"Parliament (the Legislature) is responsible for making laws."},
+          {q:"What is a 'dictatorship'?", options:["Government shared equally by all citizens","Rule by one person or a small group with absolute power","A government elected every 4 years","A government run entirely by courts"], correct:1, explain:"A dictatorship concentrates power in one person or a small group, often without free elections."}
+        ] } },
+    mapreading: { title:"Map Reading", teach:[
+        "Maps represent real places in a smaller, simplified form, using symbols, colours, and scale.",
+        "A map's scale tells you how distances on the map relate to real distances on the ground, like 1cm representing 1km.",
+        "A compass rose on a map shows direction — North, South, East, and West — helping you orient yourself."
+      ], bank:{
+        easy:[
+          {q:"What does a map's 'scale' show?", options:["The map's colour scheme","How map distances relate to real distances","The map's title","The country's population"], correct:1, explain:"Scale converts map distances into real-world distances."},
+          {q:"What does a compass rose show?", options:["Temperature","Direction (North, South, East, West)","Population density","Rainfall"], correct:1, explain:"A compass rose helps you find directions on a map."}
+        ], medium:[
+          {q:"On a 1:100,000 scale map, 1cm represents how much real distance?", options:["100m","1km","10km","100km"], correct:1, explain:"1cm × 100,000 = 100,000cm = 1km."},
+          {q:"What do contour lines usually represent?", options:["Roads","Rivers only","Points of equal height/elevation","Country borders"], correct:2, explain:"Contour lines connect points of the same elevation."}
+        ], hard:[
+          {q:"Contour lines very close together suggest the land is:", options:["Flat","Steep","Underwater","Featureless"], correct:1, explain:"Closely spaced contour lines indicate a steep slope."},
+          {q:"A map legend (key) is used to:", options:["Show the map's exact age","Explain what symbols and colours mean","List the mapmaker's name only","Show the weather forecast"], correct:1, explain:"The legend explains what each symbol or colour represents."}
+        ] } }
+  }},
+  primary: { label:"Primary", icon:"🧒", topics: {
+    counting: { title:"Counting Numbers 1–20", teach:[
+        "Counting means saying numbers in order to find out how many things there are.",
+        "We count one object at a time: 1, 2, 3… making sure not to skip or repeat any.",
+        "Numbers get bigger as we count further — 5 is more than 3, and 10 is more than 5."
+      ], bank:{
+        easy:[
+          {q:"What number comes after 4?", options:["3","4","5","6"], correct:2, explain:"Counting in order: 4, then 5."},
+          {q:"How many apples: 🍎🍎🍎?", options:["2","3","4","5"], correct:1, explain:"There are three apples shown."}
+        ], medium:[
+          {q:"What number comes before 10?", options:["8","9","10","11"], correct:1, explain:"9 comes right before 10 when counting."},
+          {q:"Which is bigger: 7 or 4?", options:["7","4","They are equal","Cannot tell"], correct:0, explain:"7 is a bigger number than 4."}
+        ], hard:[
+          {q:"Count by 2s: 2, 4, 6, ___?", options:["7","8","9","10"], correct:1, explain:"Counting by 2s: 2,4,6,8."},
+          {q:"What number is between 15 and 17?", options:["14","16","18","20"], correct:1, explain:"16 sits between 15 and 17."}
+        ] } },
+    shapes: { title:"Shapes We See", teach:[
+        "Shapes are all around us — circles, squares, triangles, and rectangles.",
+        "A circle is round with no corners. A square has 4 equal sides and 4 corners.",
+        "A triangle has 3 sides and 3 corners, while a rectangle has 4 sides with opposite sides equal."
+      ], bank:{
+        easy:[
+          {q:"How many sides does a triangle have?", options:["2","3","4","5"], correct:1, explain:"A triangle has 3 sides."},
+          {q:"Which shape is round with no corners?", options:["Square","Triangle","Circle","Rectangle"], correct:2, explain:"A circle is perfectly round with no corners."}
+        ], medium:[
+          {q:"How many corners does a square have?", options:["3","4","5","6"], correct:1, explain:"A square has 4 corners."},
+          {q:"Which shape has 4 sides where opposite sides are equal?", options:["Circle","Triangle","Rectangle","Star"], correct:2, explain:"A rectangle has 4 sides with opposite sides equal in length."}
+        ], hard:[
+          {q:"What makes a square different from a rectangle?", options:["A square has no sides","A square has all 4 sides equal","A square has 3 sides","There is no difference"], correct:1, explain:"A square is a special rectangle where all 4 sides are equal."},
+          {q:"How many sides does a rectangle have in total?", options:["2","3","4","5"], correct:2, explain:"A rectangle has 4 sides."}
+        ] } },
+    addsub: { title:"Addition & Subtraction", teach:[
+        "Addition means putting numbers together to find the total, using the '+' sign.",
+        "Subtraction means taking away, using the '-' sign, to find what's left.",
+        "For example, 3 + 2 = 5, and if we take 2 away from 5, we get 5 - 2 = 3."
+      ], bank:{
+        easy:[
+          {q:"What is 2 + 3?", options:["4","5","6","7"], correct:1, explain:"2 + 3 = 5."},
+          {q:"What is 5 - 2?", options:["2","3","4","5"], correct:1, explain:"5 - 2 = 3."}
+        ], medium:[
+          {q:"What is 7 + 6?", options:["11","12","13","14"], correct:2, explain:"7 + 6 = 13."},
+          {q:"What is 15 - 8?", options:["6","7","8","9"], correct:1, explain:"15 - 8 = 7."}
+        ], hard:[
+          {q:"What is 24 + 19?", options:["41","42","43","44"], correct:2, explain:"24 + 19 = 43."},
+          {q:"What is 50 - 27?", options:["21","22","23","24"], correct:2, explain:"50 - 27 = 23."}
+        ] } },
+    phonics: { title:"Letter Sounds (Phonics)", teach:[
+        "Every letter makes a sound, and blending those sounds together helps us read words.",
+        "For example, the letters c-a-t blend together to make the word 'cat'.",
+        "Vowels (a, e, i, o, u) often make the middle sound in short words, like the 'a' in 'cat' or the 'o' in 'dog'."
+      ], bank:{
+        easy:[
+          {q:"What sound does 'B' make at the start of 'ball'?", options:["/b/","/k/","/s/","/m/"], correct:0, explain:"'B' makes the /b/ sound, as in 'ball'."},
+          {q:"Which word starts with the same sound as 'sun'?", options:["Cat","Sock","Dog","Ball"], correct:1, explain:"'Sock' starts with the /s/ sound, just like 'sun'."}
+        ], medium:[
+          {q:"Which letters are vowels?", options:["b, c, d","a, e, i, o, u","x, y, z","m, n, p"], correct:1, explain:"a, e, i, o, u are the five vowels."},
+          {q:"Blend the sounds c-a-t. What word do they make?", options:["Cot","Cat","Cut","Cap"], correct:1, explain:"c-a-t blends to make 'cat'."}
+        ], hard:[
+          {q:"What is the vowel sound in the word 'dog'?", options:["a","e","o","u"], correct:2, explain:"'Dog' has the short 'o' vowel sound in the middle."},
+          {q:"Which word rhymes with 'hat'?", options:["Hen","Cat","Hop","Sit"], correct:1, explain:"'Cat' rhymes with 'hat' — they both end in the '-at' sound."}
+        ] } }
+  }}
+};
+const SUBJECT_ORDER = ["maths","english","science","business","arts"];
+const CLASS_QUICK_SET = { Primary:["primary"], JHS:["maths","english","science"], SHS:["maths","english","science","business","arts"] };
+function quickSubjectsForClass(){
+  if(SB.userClass && CLASS_QUICK_SET[SB.userClass.level]) return CLASS_QUICK_SET[SB.userClass.level];
+  return SUBJECT_ORDER;
+}
+
+/* =========================================================================================
+   1b. FULL SYLLABUS TREE — every JHS (Form 1–3 / Basic 7–9) and SHS (SHS1–3) subject and
+   topic, for browsing/reference and progress-checklist purposes. This is the complete
+   curriculum outline; not every topic here has a full interactive lesson yet (see
+   READY_TOPICS matching below) — topics without one are marked "Coming soon" in the UI.
+   ========================================================================================= */
+const FORM_LABELS = {
+  Primary: [["C1","Class 1"],["C2","Class 2"],["C3","Class 3"],["C4","Class 4"],["C5","Class 5"],["C6","Class 6"]],
+  JHS: [["F1","Form 1 · Basic 7"],["F2","Form 2 · Basic 8"],["F3","Form 3 · Basic 9"]],
+  SHS: [["F1","SHS 1"],["F2","SHS 2"],["F3","SHS 3"]]
+};
+const TRACK_COLOR = { "Core Subjects":"#6d5bf0","Business":"#f0a500","General Science":"#22d3c9","General Arts":"#a78bfa","Visual Arts":"#ff8a5c" };
+const CURRICULUM = {
+Primary: { "Core Subjects": {
+  "Mathematics": {
+    C1:["Counting Numbers 1–20","Shapes We See","Addition Within 10","Subtraction Within 10","Measuring & Comparing Sizes"],
+    C2:["Counting to 100","Addition Within 20","Subtraction Within 20","2D Shapes & Patterns","Telling Time (Hour & Half-hour)"],
+    C3:["Place Value to 1000","Addition & Subtraction with Regrouping","Introduction to Multiplication","Introduction to Division","Money: Ghana Cedis & Pesewas"],
+    C4:["Multiplication Tables","Long Division Basics","Fractions: Halves & Quarters","Perimeter of Shapes","Reading Bar Graphs"],
+    C5:["Factors & Multiples","Fractions & Decimals","Area of Rectangles & Squares","Angles & Lines","Data & Averages"],
+    C6:["Ratio & Proportion Basics","Percentages Introduction","Volume of Cubes & Cuboids","Negative Numbers Intro","Problem Solving with All Operations"]
+  },
+  "English Language": {
+    C1:["Letter Sounds (Phonics)","Simple Sight Words","Listening & Speaking","Basic Sentence Patterns","Picture Comprehension"],
+    C2:["Blending Sounds & Words","Simple Reading Passages","Nouns & Naming Words","Basic Punctuation","Show and Tell Speaking"],
+    C3:["Reading Fluency Practice","Simple Comprehension Passages","Verbs & Action Words","Singular & Plural Nouns","Guided Composition Writing"],
+    C4:["Comprehension: Main Idea & Details","Adjectives & Describing Words","Simple & Past Tense","Letter Writing Basics","Storytelling & Narration"],
+    C5:["Comprehension & Inference","Parts of Speech Review","Paragraph Writing","Synonyms & Antonyms","Reading Aloud & Fluency"],
+    C6:["Summary Writing Basics","Grammar Review","Composition: Narrative & Descriptive","Vocabulary Building","Preparing for JHS English"]
+  },
+  "Our World Our People": {
+    C1:["Myself & My Family","My School & Classmates","Keeping Clean & Healthy","Our Environment"],
+    C2:["My Community","Rules at Home & School","Weather & Seasons","Plants & Animals Around Us"],
+    C3:["Map of My Community","Food & Nutrition","Transport & Communication","Festivals in Ghana"],
+    C4:["Regions of Ghana","Natural Resources","Safety & First Aid","National Symbols of Ghana"],
+    C5:["Ghana's History Basics","Government at the Local Level","Trade & Markets","Protecting the Environment"],
+    C6:["Ghana's Independence Story","Citizenship & Responsibility","Population & Settlement","Preparing for JHS Social Studies"]
+  }
+}},
+JHS: { "Core Subjects": {
+  "Mathematics": {
+    F1:["Number and Numeration Systems","Number Operations","Fractions, Decimals and Percentages","Ratios and Proportion","Patterns and Relationships","Algebraic Expressions","Variables and Equations","Shapes and Space","Measurement","Position and Transformation","Data","Chance or Probability"],
+    F2:["Number and Numeration Systems","Number Operations","Fractions, Decimals and Percentages","Ratios and Proportion","Patterns and Relationships","Algebraic Expressions","Variables and Equations","Shapes and Space","Measurement","Position and Transformation","Data","Chance or Probability"],
+    F3:["Number and Numeration Systems","Number Operations","Fractions, Decimals and Percentages","Ratios and Proportion","Patterns and Relationships","Algebraic Expressions","Variables and Equations","Shapes and Space","Measurement","Position and Transformation","Data","Chance or Probability"]
+  },
+  "English Language": {
+    F1:["Reading Comprehension","Nouns & Pronouns","Articles & Prepositions","Sentence Structure","Simple Past & Present Tenses","Narrative Writing","Oral English: Sounds & Stress","Vocabulary Building","Dictionary & Reference Skills","Listening Comprehension"],
+    F2:["Comprehension & Inference","Verbs & Tenses","Subject-Verb Agreement","Conjunctions & Clauses","Descriptive Writing","Informal Letter Writing","Dialogue Writing","Adjectives & Adverbs","Summary Writing Basics","Note-taking Skills"],
+    F3:["Critical Comprehension","Argumentative & Expository Writing","Formal Letter Writing","Direct & Reported Speech","Prose & Poetry Study","Idioms & Proverbs","Advanced Summary Writing","Punctuation & Sentence Editing","Debate & Public Speaking","Drama Study"]
+  },
+  "Integrated Science": {
+    F1:["Diversity of Matter: Living & Non-living","States of Matter","Cell as Basic Unit of Life","Water & Its Uses","Energy: Forms & Sources","Human Body Systems Intro","Living Things & Their Environment","Simple Tools & Machines","Measurement in Science","Safety in the Science Laboratory"],
+    F2:["Classification of Living Things","Soil & Its Properties","Plant Growth & Nutrition","Force & Motion","Magnetism","Electricity: Simple Circuits","Sound & Light Basics","Air & the Atmosphere","Health & Disease Prevention","Waste Management"],
+    F3:["Reproduction in Plants & Animals","Chemical Changes & Reactions","Acids, Bases & Indicators","Energy Transformation","Renewable & Non-renewable Energy","The Solar System","Climate & Weather","Ecosystems & Interactions","Science & Industry","Drug Abuse & Its Effects"]
+  },
+  "Social Studies": {
+    F1:["Map Reading & Location","Physical Features of Ghana","Family & Community Life","Our Culture & Values","Chieftaincy & Traditional Authority","Population Growth","Governance at Local Level","Natural Resources","Road Safety Education","Community Development"],
+    F2:["Ghana's Political Systems","Human Rights & Responsibilities","The Family & Marriage Systems","Migration & Settlement","Environmental Degradation","Child Labour & Its Effects","Financial Literacy Basics","Sources of Government Revenue","Tourism in Ghana","Social Vices & Their Effects"],
+    F3:["National Development","Regional & International Cooperation","Conflict & Peacebuilding","Gender Issues & Social Justice","HIV/AIDS & Public Health","Corruption & Accountability","Technology & Society","Citizenship & Nation Building","Ghana's Foreign Policy","Sustainable Development Goals"]
+  },
+  "Religious & Moral Education": {
+    F1:["Meaning & Existence of God","Creation Stories & Beliefs","Religious Practices in Ghana","Prayer & Worship","Rules, Norms & Values","Respect for Authority","Family Life & Discipline"],
+    F2:["Marriage & Family Systems","Puberty Rites & Rites of Passage","Traditional Festivals & Practices","Honesty & Integrity","Religious Tolerance","Care for the Aged","Sanctity of Life"],
+    F3:["Human Rights: A Moral Perspective","Corruption & Its Effects","Sexuality & Moral Values","Environmental Stewardship","Leadership & Followership","National Ethics & Values","World Religions Overview","Moral Reasoning & Decision-Making"]
+  },
+  "Career Technology": {
+    F1:["Introduction to Career Technology","Basic Tools & Safety","Materials & Their Properties","Home Management Skills","Personal Hygiene & Grooming","Simple Machines"],
+    F2:["Basic Electronics & Circuits","Food & Nutrition","Technical Drawing Basics","Basic Woodwork Skills","Basic Metalwork Skills","Textiles & Fashion Basics"],
+    F3:["Woodwork & Metalwork Projects","Batik & Tie-Dye Making","Entrepreneurship Basics","Agriculture & Farm Practices","ICT in Career Technology","Career Choices & Pathways"]
+  },
+  "Computing": {
+    F1:["Computer Basics & Parts","History & Generations of Computers","Input & Output Devices","File Management","Keyboarding Skills","Introduction to the Internet"],
+    F2:["Word Processing","Spreadsheets Basics","Introduction to Presentations","Computer Viruses & Security","Email & Online Communication","Internet Safety & Digital Citizenship"],
+    F3:["Basic Programming Concepts","Algorithms & Flowcharts","Databases Basics","Networking Fundamentals","Multimedia Applications","Digital Communication & Ethics"]
+  }
+}},
+SHS: {
+"Core Subjects": {
+  "Mathematics": {
+    F1:["Real Number System","Proportional Reasoning","Applications of Expressions, Equations and Inequalities","Patterns and Relationships","Spatial Sense","Measurement","Statistical Reasoning and its Application in Real Life","Probability/Chance"],
+    F2:["Real Number and Numeration System","Proportional Reasoning","Applications of Expressions, Equations and Inequalities","Patterns and Relationships","Spatial Sense","Measurement","Statistical Reasoning and its Application in Real Life","Probability/Chance"],
+    F3:["Proportional Reasoning","Patterns and Relationships","Spatial Sense","Measurement","Statistical Reasoning and its Application in Real Life","Probability/Chance"]
+  },
+  "English Language": {
+    F1:["Comprehension & Summary Skills","Vocabulary in Context","Grammar: Sentence Structures","Parts of Speech Review","Narrative & Descriptive Essays","Oral English: Phonetics"],
+    F2:["Argumentative & Expository Essays","Article & Speech Writing","Literature Appreciation","Letter & Report Writing","Tenses & Concord","Figures of Speech"],
+    F3:["Advanced Summary Writing","Critical Comprehension","Complex Grammar Structures","Register & Style in Writing","Editing & Proofreading","Interview & Presentation Skills","WASSCE Exam Techniques"]
+  },
+  "Integrated Science": {
+    F1:["Diversity of Matter","Scientific Method & Lab Safety","Cells & Cell Structure","Classification & Diversity of Organisms","Measurement & Units","Energy: Forms & Conservation"],
+    F2:["Circulatory & Respiratory Systems","Digestive & Excretory Systems","Chemical Reactions & Equations","Acids, Bases & Salts Overview","Electricity & Magnetism Basics","Ecology & Ecosystems"],
+    F3:["Genetics & Heredity Basics","Reproductive Health","Pollution & Climate Change","Renewable Energy & Sustainability","Science & Technology in Society","Revision & WASSCE Practice"]
+  },
+  "Social Studies": {
+    F1:["Physical Environment & Resources","Map Work & Statistical Data","Population & Development","Culture & Social Change","Family & Social Institutions"],
+    F2:["Governance & the Constitution","Human Rights & the Law","Science, Technology & Society","Renewable Resources & Energy","Conflict & Peace"],
+    F3:["Regional & International Integration","Ghana's Economy & Development Challenges","Sustainable Development","Global Issues & Ghana's Role","National Development Planning","Revision & WASSCE Practice"]
+  }
+},
+"Business": {
+  "Financial Accounting": {
+    F1:["Accounting Concepts & Principles","Source Documents & Books of Original Entry","Journals & the Ledger","Double Entry Principle","Cash Book & Petty Cash","Trial Balance"],
+    F2:["Final Accounts of Sole Traders","Accruals & Prepayments","Depreciation of Fixed Assets","Bad Debts & Provisions","Stock Valuation","Bank Reconciliation Statements","Control Accounts"],
+    F3:["Partnership Accounts","Introduction to Company Accounts","Non-Profit Organisation Accounts","Correction of Errors & Suspense Accounts","Manufacturing Accounts","Accounting Ratios & Interpretation","Revision & WASSCE Practice"]
+  },
+  "Business Management": {
+    F1:["Nature of Business & the Business Environment","Forms of Business Ownership","Business Documents","Business Location & Start-up","Entrepreneurship & Innovation"],
+    F2:["Management: Planning & Organising","Leading & Controlling Functions","Marketing Concepts & the Marketing Mix","Human Resource Management Basics","Office Practice & Administration"],
+    F3:["Production Management","Business Finance & Sources of Capital","Insurance & Risk Management","Business Ethics & Social Responsibility","International Business Basics","Revision & WASSCE Practice"]
+  },
+  "Economics": {
+    F1:["Basic Economic Concepts & Problems","Economic Systems","Theory of Demand & Supply","Elasticity of Demand & Supply","Utility & Consumer Behaviour"],
+    F2:["Theory of Production & Costs","Factors of Production","Market Structures","Theory of the Firm","Population & Economic Development"],
+    F3:["National Income Accounting","Money, Banking & Inflation","Public Finance & Taxation","International Trade & Exchange Rates","Economic Growth & Development","Economic Planning in Ghana","Revision & WASSCE Practice"]
+  },
+  "Cost Accounting": {
+    F1:["Cost Concepts & Classification","Elements of Cost","Cost Accounting vs Financial Accounting","Material Costing & Stock Control","Cost Behaviour & Cost-Volume-Profit"],
+    F2:["Labour Costing & Remuneration Systems","Overhead Allocation & Absorption","Job & Batch Costing","Process Costing","Contract Costing"],
+    F3:["Marginal Costing & Break-even Analysis","Budgeting & Budgetary Control","Standard Costing & Variance Analysis","Decision Making with Cost Data","Revision & WASSCE Practice"]
+  }
+},
+"General Science": {
+  "Physics": {
+    F1:["Physical Quantities & Units","Scalars & Vectors","Motion in a Straight Line","Forces & Newton's Laws","Statics: Equilibrium of Forces","Work, Energy & Power"],
+    F2:["Properties of Waves","Waves & Sound","Reflection & Refraction of Light","Lenses & Optical Instruments","Electric Fields & Current Electricity","Electromagnetism"],
+    F3:["Thermal Physics & Heat Transfer","Gas Laws & Kinetic Theory","Modern Physics: Atomic Structure","Radioactivity & Nuclear Physics","Electronics Basics","Revision & WASSCE Practice"]
+  },
+  "Chemistry": {
+    F1:["Atomic Structure & the Periodic Table","Chemical Bonding","Separation Techniques","The Mole Concept","Stoichiometry & Chemical Equations"],
+    F2:["Acids, Bases & Salts","States of Matter & Gas Laws","Solubility & Solutions","Energy Changes in Reactions","Rates of Reaction & Equilibrium"],
+    F3:["Organic Chemistry: Hydrocarbons","Alcohols, Acids & Esters","Electrochemistry","Industrial Chemistry","Environmental Chemistry","Revision & WASSCE Practice"]
+  },
+  "Biology": {
+    F1:["Characteristics of Living Things","Cell Structure & Function","Levels of Organisation","Classification of Living Things","Nutrition in Plants & Animals"],
+    F2:["Transport Systems","Support & Movement","Respiration & Gaseous Exchange","Excretion in Plants & Animals","Reproduction in Plants & Animals","Genetics & Variation"],
+    F3:["Coordination & Response","Ecology & Ecosystems","Evolution & Natural Selection","Human Health & Disease","Conservation of Natural Resources","Revision & WASSCE Practice"]
+  },
+  "Elective Mathematics": {
+    F1:["Sets & Relations","Functions","Polynomials & Rational Functions","Indices, Surds & Logarithms","Binomial Theorem"],
+    F2:["Trigonometry","Coordinate Geometry","Circle Equations","Sequences & Series","Permutations & Combinations","Vectors in 2D & 3D"],
+    F3:["Differentiation & Applications","Integration & Applications","Statistics & Probability","Kinematics & Linear Motion","Projectiles","Matrices & Determinants","Revision & WASSCE Practice"]
+  }
+},
+"General Arts": {
+  "Literature-in-English": {
+    F1:["Introduction to Literary Genres","Literary Terms & Devices","African Prose Study","Oral Literature","Elements of Poetry"],
+    F2:["Drama: Set Text Study","Non-African Prose Study","Poetry Appreciation: Set Poems","Themes & Characterisation","Literary Devices & Analysis"],
+    F3:["Unseen Prose & Poetry","African Poetry Study","Drama: Non-African Set Text","Comparative Literary Analysis","Critical Essay Writing","Revision & WASSCE Practice"]
+  },
+  "Government": {
+    F1:["Meaning & Types of Government","The State & Sovereignty","Systems of Government","Organs of Government","Citizenship"],
+    F2:["The Constitution & Rule of Law","Separation of Powers","Electoral Systems","Political Parties & Pressure Groups","Public Administration"],
+    F3:["International Relations & Organisations","Political Ideologies","Ghana's Political History","Local Government & Decentralisation","Public Corporations","Revision & WASSCE Practice"]
+  },
+  "Geography": {
+    F1:["Map Reading & Interpretation","The Earth & Its Structure","The Solar System & the Earth","Rocks & Minerals","Weather & Climate"],
+    F2:["Population Geography","Settlement Geography","Vegetation & Soils","Economic Geography: Agriculture & Industry","Mining & Energy Resources"],
+    F3:["Physical Geography of Ghana & West Africa","Transport & Trade in West Africa","Environmental & Resource Management","Climate Change & Natural Hazards","Fieldwork & Map Skills","Revision & WASSCE Practice"]
+  },
+  "History": {
+    F1:["Sources of History","Early Ghanaian Kingdoms","Pre-Colonial States & Societies","European Contact & Trade","The Slave Trade & Its Effects"],
+    F2:["Anglo-Ashanti Wars","Colonial Rule & Administration","Economic Impact of Colonial Rule","Nationalist Movements & Independence Struggle","Key Nationalist Leaders"],
+    F3:["Post-Independence Ghana","Military Rule in Ghana","The Fourth Republic","Pan-Africanism & African Nationalism","Ghana's Political History Since 1957","Revision & WASSCE Practice"]
+  },
+  "French": {
+    F1:["Greetings & Basic Conversation","Numbers & Time","Grammar: Present Tense","Classroom Instructions","Vocabulary: Family & Daily Life"],
+    F2:["Grammar: Past & Future Tenses","Vocabulary: School & Travel","Vocabulary: Food & Shopping","Comprehension Passages","Descriptive Writing in French"],
+    F3:["Grammar: Complex Structures","Francophone Culture","Oral Conversation Practice","Listening Comprehension","Essay & Letter Writing","Revision & WASSCE Practice"]
+  }
+},
+"Visual Arts": {
+  "Graphic Design": {
+    F1:["Elements & Principles of Design","History of Graphic Design","Introduction to Typography","Basic Drawing for Design","Materials & Tools"],
+    F2:["Colour Theory & Application","Layout & Composition","Illustration Techniques","Poster & Flyer Design","Digital Design Tools Basics"],
+    F3:["Branding & Logo Design","Advertising Design","Packaging Design","UI/UX Basics","Portfolio Development","Revision & WASSCE Practice"]
+  },
+  "Picture Making": {
+    F1:["Drawing Fundamentals","Line & Shape Studies","Shading & Tone Techniques","Perspective Drawing","Still Life Studies"],
+    F2:["Painting Techniques & Media","Composition & Colour","Mixed Media Techniques","Nature & Object Studies","Portraiture Basics"],
+    F3:["Landscape & Figure Painting","Ghanaian Themes in Picture Making","Abstract & Expressive Painting","Exhibition Preparation","Portfolio Development","Revision & WASSCE Practice"]
+  },
+  "General Knowledge in Art": {
+    F1:["Introduction to Art History","Elements & Principles of Art","Art Materials & Media","Ghanaian Traditional Art Forms","Symbols in Ghanaian Art"],
+    F2:["African Art History","World Art History Overview","Art Criticism & Appreciation","Art & Culture","Art & Religion"],
+    F3:["Contemporary Art Trends","Art Entrepreneurship","Museum & Gallery Studies","Careers in Art","Art Appreciation Practical","Revision & WASSCE Practice"]
+  }
+}}};
+
+/* =========================================================================================
+   2. STATE & PERSISTENCE — everything here is saved to localStorage under "sb_state"
+   ========================================================================================= */
+const STORE_KEY = "sb_state_v1";
+function defaultState(){
+  return {
+    xp:0, answerStreak:0, dayStreak:0, lastActiveDay:null,
+    totalAnswered:0, totalCorrect:0,
+    mastery:{},          // mastery[subject][topic] = {correct,wrong,tier,completed}
+    lastTopic:null,      // {subject, topic}
+    onboarded:false,
+    userClass:null,       // {level:"Primary"|"JHS"|"SHS", grade:"C1".."C6"|"F1".."F3", label:"Class 3"}
+    theme:null
+  };
+}
+let SB = loadState();
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  }catch(e){ return defaultState(); }
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(SB)); }catch(e){ /* storage unavailable — app still works, just won't persist */ }
+}
+function touchDayStreak(){
+  const today = new Date().toDateString();
+  if(SB.lastActiveDay === today) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  SB.dayStreak = (SB.lastActiveDay === y.toDateString()) ? SB.dayStreak + 1 : 1;
+  SB.lastActiveDay = today;
+  saveState();
+}
+function getMastery(subject, topic){
+  SB.mastery[subject] = SB.mastery[subject] || {};
+  SB.mastery[subject][topic] = SB.mastery[subject][topic] || {correct:0, wrong:0, tier:"easy", completed:false, asked:{easy:[],medium:[],hard:[]}};
+  return SB.mastery[subject][topic];
+}
+
+/* =========================================================================================
+   3. TEACHER ENGINE — generateTeacherResponse(userMessage, context)
+   🔌 FUTURE AI API HOOK: this is the ONLY function you need to replace to connect a real
+   AI API later. Keep the same signature and return shape:
+     { reply: "text the teacher should say", action: "teach"|"question"|"answer"|"none", data:{...} }
+   Right now it's a local keyword-matching engine — no network calls, works fully offline.
+   ========================================================================================= */
+function findTopicByName(text){
+  const t = text.toLowerCase();
+  for(const subj of Object.keys(LESSONS)){
+    for(const key of Object.keys(LESSONS[subj].topics)){
+      const topic = LESSONS[subj].topics[key];
+      if(t.includes(key) || t.includes(topic.title.toLowerCase())) return {subject:subj, topic:key};
+    }
+  }
+  return null;
+}
+function generateTeacherResponse(userMessage, context){
+  const msg = (userMessage||"").toLowerCase().trim();
+  context = context || {};
+  const ctxSubject = context.subject, ctxTopic = context.topic;
+
+  // "explain X" / "teach me X" / "learn X" — with or without a topic named
+  if(/explain|teach|learn|start/.test(msg)){
+    const found = findTopicByName(msg);
+    if(found) return { reply:`Sure! Let's learn ${LESSONS[found.subject].topics[found.topic].title}.`, action:"teach", data:found };
+    if(ctxSubject && ctxTopic) return { reply:"Let's go over that again from the start.", action:"teach", data:{subject:ctxSubject, topic:ctxTopic} };
+    return { reply:"Which topic would you like me to explain? Try naming one, like 'explain fractions'.", action:"none" };
+  }
+  // "I don't understand" / "explain again" / "repeat"
+  if(/don'?t understand|explain (that )?again|repeat|again please|confused/.test(msg)){
+    if(ctxSubject && ctxTopic) return { reply:"No worries — let's slow down and go through it again.", action:"teach", data:{subject:ctxSubject, topic:ctxTopic} };
+    return { reply:"Pick a subject first, and I'll teach it step by step.", action:"none" };
+  }
+  // "another question" / "next question" / "test me" / "quiz me"
+  if(/another question|next question|test me|quiz me|give me a question/.test(msg)){
+    if(ctxSubject && ctxTopic) return { reply:"Here's one for you.", action:"question", data:{subject:ctxSubject, topic:ctxTopic} };
+    return { reply:"Let's pick a topic first — say something like 'explain percentages'.", action:"none" };
+  }
+  // "make it harder" / "harder"
+  if(/harder|more difficult|challenge/.test(msg)){
+    if(ctxSubject && ctxTopic){ bumpTier(ctxSubject, ctxTopic, 1); return { reply:"Alright, let's raise the difficulty!", action:"question", data:{subject:ctxSubject, topic:ctxTopic} }; }
+    return { reply:"Start a topic first, then I can make it harder.", action:"none" };
+  }
+  // "make it easier" / "easier"
+  if(/easier|simpler|too hard/.test(msg)){
+    if(ctxSubject && ctxTopic){ bumpTier(ctxSubject, ctxTopic, -1); return { reply:"No problem, let's ease off a bit.", action:"question", data:{subject:ctxSubject, topic:ctxTopic} }; }
+    return { reply:"Start a topic first, then I can make it easier.", action:"none" };
+  }
+  // "what is the answer" / "give up" / "skip"
+  if(/what is the answer|give up|skip|i don'?t know/.test(msg)){
+    if(ctxSubject && ctxTopic) return { reply:"Here's the answer, then we'll try another.", action:"answer", data:{subject:ctxSubject, topic:ctxTopic} };
+    return { reply:"There's no question active right now — say 'test me' to get one.", action:"none" };
+  }
+  // "option a/b/c/d" or a bare letter
+  const optMatch = msg.match(/\boption\s*([abcd])\b/) || msg.match(/^([abcd])$/);
+  if(optMatch){
+    return { reply:"", action:"submit", data:{letter:optMatch[1]} };
+  }
+  // greetings
+  if(/^(hi|hello|hey|good morning|good afternoon)\b/.test(msg)){
+    return { reply:"Hey! Ready to learn something today? Try 'explain algebra' or 'test me'.", action:"none" };
+  }
+  // fallback — try to match the raw text to one of the current question's option text
+  if(context.currentOptions){
+    const idx = context.currentOptions.findIndex(o=>msg.includes(o.toLowerCase()));
+    if(idx>=0) return { reply:"", action:"submit", data:{index:idx} };
+  }
+  return { reply:"I didn't quite catch that. Try: 'explain a topic', 'test me', 'make it harder', or 'what is the answer'.", action:"none" };
+}
+function bumpTier(subject, topic, dir){
+  const m = getMastery(subject, topic);
+  const order = ["easy","medium","hard"];
+  let i = order.indexOf(m.tier);
+  i = Math.max(0, Math.min(order.length-1, i+dir));
+  m.tier = order[i];
+  saveState();
+}
+
+/* =========================================================================================
+   4. AVATAR — SVG face, mouth animation, expressions
+   ========================================================================================= */
+let mouthTimer = null;
+function avatarSetTalking(on){
+  const head = document.getElementById("head-g");
+  const ring = document.getElementById("speak-ring");
+  if(on){
+    head.classList.add("talking"); ring.classList.add("on");
+    clearInterval(mouthTimer);
+    const shapes = ["M88 136 Q110 150 132 136","M90 138 Q110 138 130 138","M92 137 Q110 143 128 137","M88 137 Q110 146 132 137"];
+    mouthTimer = setInterval(()=>{
+      document.getElementById("mouth").setAttribute("d", shapes[Math.floor(Math.random()*shapes.length)]);
+    }, 120);
+  } else {
+    head.classList.remove("talking"); ring.classList.remove("on");
+    clearInterval(mouthTimer);
+    document.getElementById("mouth").setAttribute("d","M90 138 Q110 138 130 138");
+  }
+}
+function avatarExpress(mood){
+  // mood: "happy" | "sad" | "neutral"
+  const browL = document.getElementById("brow-l"), browR = document.getElementById("brow-r"), mouth = document.getElementById("mouth");
+  const moodText = document.getElementById("mood-text");
+  if(mood==="happy"){
+    browL.setAttribute("d","M76 80 Q90 72 104 78"); browR.setAttribute("d","M116 78 Q130 72 144 80");
+    if(!document.getElementById("head-g").classList.contains("talking")) mouth.setAttribute("d","M86 134 Q110 154 134 134");
+    moodText.textContent = "Nice one! 🎉";
+  } else if(mood==="sad"){
+    browL.setAttribute("d","M76 88 Q90 94 104 86"); browR.setAttribute("d","M116 86 Q130 94 144 88");
+    if(!document.getElementById("head-g").classList.contains("talking")) mouth.setAttribute("d","M90 142 Q110 130 130 142");
+    moodText.textContent = "Almost — let's try again";
+  } else {
+    browL.setAttribute("d","M76 84 Q90 76 104 82"); browR.setAttribute("d","M116 82 Q130 76 144 84");
+    if(!document.getElementById("head-g").classList.contains("talking")) mouth.setAttribute("d","M90 138 Q110 138 130 138");
+    moodText.textContent = "Ready to teach";
+  }
+  clearTimeout(avatarExpress._t);
+  avatarExpress._t = setTimeout(()=>{ if(mood!=="neutral") avatarExpress("neutral"); }, 2200);
+}
+
+/* =========================================================================================
+   5. SPEECH — SpeechRecognition (mic input) + SpeechSynthesis (teacher voice)
+   ========================================================================================= */
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null, listening = false;
+function initSpeechRecognition(){
+  const micBtn = document.getElementById("mic-btn");
+  const note = document.getElementById("mic-note");
+  if(!SpeechRec){
+    micBtn.style.display = "none";
+    note.textContent = "Voice input isn't supported in this browser — use the text box instead.";
+    return;
+  }
+  recognizer = new SpeechRec();
+  recognizer.lang = "en-US"; recognizer.interimResults = false; recognizer.maxAlternatives = 1;
+  recognizer.onstart = ()=>{ listening = true; micBtn.classList.add("listening"); note.textContent = "Listening…"; };
+  recognizer.onerror = ()=>{ listening = false; micBtn.classList.remove("listening"); note.textContent = "Didn't catch that — try again or type instead."; };
+  recognizer.onend = ()=>{ listening = false; micBtn.classList.remove("listening"); };
+  recognizer.onresult = (e)=>{
+    const said = e.results[0][0].transcript;
+    note.textContent = `You said: "${said}"`;
+    handleUserMessage(said);
+  };
+  micBtn.addEventListener("click", ()=>{
+    if(listening){ recognizer.stop(); return; }
+    try{ recognizer.start(); }catch(e){ /* already started */ }
+  });
+}
+let speakTimer = null;
+function speakText(text, opts){
+  opts = opts || {};
+  const box = document.getElementById("caption-box");
+  box.innerHTML = text.split(" ").map(w=>`<span class="word">${escapeHtml(w)}</span>`).join(" ");
+  clearInterval(speakTimer);
+  avatarSetTalking(true);
+  const words = box.querySelectorAll(".word");
+  let wi = 0;
+  speakTimer = setInterval(()=>{
+    if(wi < words.length){ words[wi].classList.add("said"); wi++; }
+    else clearInterval(speakTimer);
+  }, 1000/2.6);
+  if(!("speechSynthesis" in window)){
+    setTimeout(()=>{ avatarSetTalking(false); if(opts.onend) opts.onend(); }, Math.min(6000, words.length*380));
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1; u.pitch = 1.05;
+  u.onend = ()=>{ avatarSetTalking(false); clearInterval(speakTimer); words.forEach(w=>w.classList.add("said")); if(opts.onend) opts.onend(); };
+  speechSynthesis.speak(u);
+}
+
+/* =========================================================================================
+   6. QUIZ ENGINE — adaptive difficulty, in the Teacher screen
+   ========================================================================================= */
+let activeQ = null; // { subject, topic, tier, question }
+function pickQuestion(subject, topic){
+  const m = getMastery(subject, topic);
+  const bank = LESSONS[subject].topics[topic].bank[m.tier];
+  let pool = bank.map((q,i)=>i).filter(i=>!m.asked[m.tier].includes(i));
+  if(pool.length===0){ m.asked[m.tier] = []; pool = bank.map((q,i)=>i); }
+  const idx = pool[Math.floor(Math.random()*pool.length)];
+  m.asked[m.tier].push(idx);
+  saveState();
+  return { question: bank[idx], tier: m.tier, subject, topic };
+}
+function askQuestion(subject, topic){
+  activeQ = pickQuestion(subject, topic);
+  const qb = document.getElementById("question-box");
+  const boardZone = document.getElementById("board-zone");
+  boardZone.style.display = "none";
+  qb.style.display = "block";
+  document.getElementById("q-text").textContent = activeQ.question.q;
+  const letters = ["A","B","C","D"];
+  document.getElementById("q-opts").innerHTML = activeQ.question.options.map((o,i)=>
+    `<button class="qopt" data-i="${i}"><b>${letters[i]}.</b> ${escapeHtml(o)}</button>`).join("");
+  document.getElementById("q-explain").style.display = "none";
+  document.querySelectorAll("#q-opts .qopt").forEach(btn=>btn.addEventListener("click", ()=>submitAnswer(parseInt(btn.dataset.i,10))));
+  speakText(`${activeQ.question.q}. Option A: ${activeQ.question.options[0]}. Option B: ${activeQ.question.options[1]}. Option C: ${activeQ.question.options[2]}. Option D: ${activeQ.question.options[3]}.`);
+}
+function submitAnswer(index){
+  if(!activeQ) return;
+  const q = activeQ.question;
+  const correct = index === q.correct;
+  const buttons = document.querySelectorAll("#q-opts .qopt");
+  buttons.forEach((b,i)=>{
+    b.style.pointerEvents = "none";
+    if(i===q.correct) b.classList.add("correct");
+    else if(i===index) b.classList.add("wrong");
+  });
+  const ex = document.getElementById("q-explain");
+  ex.style.display = "block"; ex.textContent = (correct?"Correct! ":"Not quite. ") + q.explain;
+
+  const m = getMastery(activeQ.subject, activeQ.topic);
+  SB.totalAnswered++;
+  if(correct){
+    SB.totalCorrect++; m.correct++; SB.answerStreak++;
+    const gain = m.tier==="hard" ? 20 : m.tier==="medium" ? 15 : 10;
+    SB.xp += gain;
+    avatarExpress("happy");
+    if(SB.answerStreak>0 && SB.answerStreak % 2 === 0){
+      const order=["easy","medium","hard"]; const i=order.indexOf(m.tier);
+      if(i<2){ m.tier = order[i+1]; toast("Level up! Now on "+m.tier+" questions 🚀"); }
+    }
+    if(m.tier==="hard" && m.correct>=2) { if(!m.completed){ m.completed = true; toast("Topic mastered! 🏆"); confettiBurst(); } }
+  } else {
+    m.wrong++; SB.answerStreak = 0;
+    avatarExpress("sad");
+    const order=["easy","medium","hard"]; const i=order.indexOf(m.tier);
+    if(i>0){ m.tier = order[i-1]; }
+  }
+  saveState(); refreshHeaderStats();
+  speakText((correct?"Correct! ":"Not quite. ") + q.explain, { onend:()=>{
+    setTimeout(()=>{ if(activeQ) askQuestion(activeQ.subject, activeQ.topic); }, 400);
+  }});
+}
+function revealAnswer(){
+  if(!activeQ) return;
+  submitAnswer(-1); // treated as wrong, but explanation still shows correct answer highlighted
+}
+
+/* =========================================================================================
+   7. LESSON FEED — vertical swipe cards (teach cards + inline question cards)
+   ========================================================================================= */
+const FEED_BG = [
+  "linear-gradient(160deg,#6d5bf0,#22d3c9)","linear-gradient(160deg,#ff8a5c,#ff6b6b)",
+  "linear-gradient(160deg,#3ddc97,#22d3c9)","linear-gradient(160deg,#a78bfa,#6d5bf0)",
+  "linear-gradient(160deg,#ffb703,#ff6b6b)","linear-gradient(160deg,#22d3c9,#3ddc97)"
+];
+function buildFeedItems(){
+  const items = [];
+  let ci = 0;
+  SUBJECT_ORDER.forEach(subj=>{
+    Object.keys(LESSONS[subj].topics).forEach(key=>{
+      const topic = LESSONS[subj].topics[key];
+      items.push({ type:"teach", subject:subj, topic:key, title:topic.title, line:topic.teach[0], bg:FEED_BG[ci++ % FEED_BG.length], icon:LESSONS[subj].icon, label:LESSONS[subj].label });
+      const m = getMastery(subj, key);
+      const q = topic.bank[m.tier][0];
+      items.push({ type:"question", subject:subj, topic:key, title:topic.title, q, bg:FEED_BG[ci++ % FEED_BG.length], icon:LESSONS[subj].icon, label:LESSONS[subj].label });
+    });
+  });
+  // simple shuffle for a "For You" feel, seeded lightly so it's not jarring
+  for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]]; }
+  return items;
+}
+function renderFeed(){
+  const wrap = document.getElementById("feed-wrap");
+  const items = buildFeedItems();
+  wrap.innerHTML = items.map((it,i)=>{
+    if(it.type==="teach"){
+      return `<div class="feed-card" style="background:${it.bg}">
+        <div class="feed-progress">${items.map((x,j)=>`<i class="${j<=i?'done':''}"></i>`).join("")}</div>
+        <div class="fc-content">
+          <span class="feed-cat">${it.icon} ${it.label} · ${escapeHtml(it.title)}</span>
+          <h3>${escapeHtml(it.title)}</h3>
+          <p>${escapeHtml(it.line)}</p>
+          <div class="feed-actions">
+            <button class="feed-btn-primary" data-open="${it.subject}|${it.topic}">Open full lesson</button>
+            <button class="feed-btn-ghost" data-scroll="next">Next ↓</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      const letters=["A","B","C","D"];
+      return `<div class="feed-card" style="background:${it.bg}">
+        <div class="feed-progress">${items.map((x,j)=>`<i class="${j<=i?'done':''}"></i>`).join("")}</div>
+        <div class="fc-content feed-q">
+          <span class="feed-cat">${it.icon} Quick check · ${escapeHtml(it.title)}</span>
+          <p class="qtext">${escapeHtml(it.q.q)}</p>
+          <div class="qopts" data-feed-opts="1">
+            ${it.q.options.map((o,oi)=>`<button class="qopt" data-correct="${oi===it.q.correct}" data-subject="${it.subject}" data-topic="${it.topic}"><b>${letters[oi]}.</b> ${escapeHtml(o)}</button>`).join("")}
+          </div>
+        </div>
+      </div>`;
+    }
+  }).join("");
+  wrap.querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const [s,t] = btn.dataset.open.split("|");
+      openTeacherWithTopic(s,t); switchScreen("teacher");
+    });
+  });
+  wrap.querySelectorAll('[data-feed-opts] .qopt').forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const group = btn.closest('[data-feed-opts]');
+      const correct = btn.dataset.correct === "true";
+      group.querySelectorAll(".qopt").forEach(b=>{ b.style.pointerEvents="none"; if(b.dataset.correct==="true") b.classList.add("correct"); });
+      if(!correct) btn.classList.add("wrong");
+      const m = getMastery(btn.dataset.subject, btn.dataset.topic);
+      SB.totalAnswered++;
+      if(correct){ SB.totalCorrect++; SB.xp+=8; m.correct++; SB.answerStreak++; }
+      else { m.wrong++; SB.answerStreak=0; }
+      saveState(); refreshHeaderStats();
+    });
+  });
+}
+
+/* =========================================================================================
+   8. SCREEN RENDERERS — home, subjects, progress
+   ========================================================================================= */
+function refreshHeaderStats(){
+  document.getElementById("hdr-streak").textContent = SB.dayStreak;
+  document.getElementById("hdr-xp").textContent = SB.xp;
+  document.getElementById("hdr-class").textContent = SB.userClass ? SB.userClass.label : "Set class";
+  document.getElementById("stat-xp").textContent = SB.xp;
+  document.getElementById("stat-streak").textContent = SB.dayStreak;
+  const acc = SB.totalAnswered ? Math.round(SB.totalCorrect/SB.totalAnswered*100) : 0;
+  document.getElementById("stat-accuracy").textContent = acc+"%";
+  document.getElementById("p-xp").textContent = SB.xp;
+  document.getElementById("p-streak").textContent = SB.dayStreak;
+  document.getElementById("p-acc").textContent = acc+"%";
+  document.getElementById("p-answered").textContent = SB.totalAnswered;
+  let mastered = 0;
+  Object.values(SB.mastery).forEach(subj=>Object.values(subj).forEach(t=>{ if(t.completed) mastered++; }));
+  document.getElementById("p-completed").textContent = mastered;
+}
+function renderHome(){
+  const hr = new Date().getHours();
+  const timeWord = hr<12?"this morning":hr<17?"this afternoon":"tonight";
+  document.getElementById("home-greet-time").textContent = SB.userClass ? SB.userClass.label : timeWord;
+  const cont = document.getElementById("continue-row");
+  if(SB.lastTopic){
+    const {subject,topic} = SB.lastTopic;
+    const t = LESSONS[subject].topics[topic];
+    const m = getMastery(subject, topic);
+    const pct = Math.min(100, Math.round((m.correct/(m.correct+m.wrong||1))*100));
+    cont.innerHTML = `<div class="continue-card">
+      <div class="tag">${LESSONS[subject].label}</div>
+      <h3>${escapeHtml(t.title)}</h3>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <button id="cont-open">Resume — ${m.tier} level</button>
+    </div>`;
+    document.getElementById("cont-open").addEventListener("click", ()=>{ openTeacherWithTopic(subject,topic); switchScreen("teacher"); });
+  } else {
+    cont.innerHTML = `<div class="continue-card"><div class="tag">Get started</div><h3>No lesson yet</h3><div class="bar"><i style="width:0%"></i></div>
+      <button id="cont-open">Pick a subject</button></div>`;
+    document.getElementById("cont-open").addEventListener("click", ()=>switchScreen("subjects"));
+  }
+  document.getElementById("home-continue-btn").onclick = ()=>{ if(SB.lastTopic){ openTeacherWithTopic(SB.lastTopic.subject, SB.lastTopic.topic); switchScreen("teacher"); } else switchScreen("subjects"); };
+  document.getElementById("home-feed-cta").onclick = ()=>switchScreen("feed");
+
+  const rec = document.getElementById("rec-row");
+  const picks = [];
+  quickSubjectsForClass().forEach(s=>{ const keys = Object.keys(LESSONS[s].topics); picks.push({subject:s, topic:keys[Math.floor(Math.random()*keys.length)]}); });
+  rec.innerHTML = picks.map(p=>{
+    const t = LESSONS[p.subject].topics[p.topic];
+    return `<div class="rec-card" data-open="${p.subject}|${p.topic}"><div class="ic">${LESSONS[p.subject].icon}</div><h4>${escapeHtml(t.title)}</h4><span>${LESSONS[p.subject].label}</span></div>`;
+  }).join("");
+  rec.querySelectorAll("[data-open]").forEach(el=>el.addEventListener("click", ()=>{
+    const [s,t]=el.dataset.open.split("|"); openTeacherWithTopic(s,t); switchScreen("teacher");
+  }));
+}
+function renderSubjects(){
+  const grid = document.getElementById("subject-grid");
+  const titleEl = document.getElementById("quick-start-title"), subEl = document.getElementById("quick-start-sub");
+  if(SB.userClass){
+    titleEl.textContent = `Quick start — ${SB.userClass.label}`;
+    subEl.textContent = `Ready lessons picked for your class.`;
+  } else {
+    titleEl.textContent = "Quick start";
+    subEl.textContent = "These subjects have full interactive lessons ready right now.";
+  }
+  let html = "";
+  quickSubjectsForClass().forEach(s=>{
+    const topics = Object.keys(LESSONS[s].topics);
+    let done=0; topics.forEach(t=>{ if(getMastery(s,t).completed) done++; });
+    html += `<button class="subj-card" data-subj="${s}"><span class="ring">${done}/${topics.length}</span><div class="ic">${LESSONS[s].icon}</div><h4>${LESSONS[s].label}</h4><span>${topics.length} topics</span></button>`;
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll("[data-subj]").forEach(btn=>btn.addEventListener("click", ()=>renderTopicPanel(btn.dataset.subj)));
+  document.getElementById("topic-panel").innerHTML = "";
+  if(SB.userClass && !sylState.subject){ sylState.level = SB.userClass.level; }
+  renderSyllabusBrowser();
+}
+function renderTopicPanel(subject){
+  const panel = document.getElementById("topic-panel");
+  const topics = LESSONS[subject].topics;
+  panel.innerHTML = `<div class="section-title">${LESSONS[subject].label} topics</div><div class="topic-chip-list">` +
+    Object.keys(topics).map(key=>{
+      const t = topics[key]; const m = getMastery(subject,key);
+      const acc = (m.correct+m.wrong) ? Math.round(m.correct/(m.correct+m.wrong)*100) : 0;
+      return `<button class="topic-chip" data-open="${subject}|${key}">
+        <span>${escapeHtml(t.title)}${m.completed?" ✅":""}</span>
+        <span class="lvl ${m.tier}">${m.tier}</span>
+        <span class="mastery">${acc}% acc</span>
+      </button>`;
+    }).join("") + "</div>";
+  panel.querySelectorAll("[data-open]").forEach(el=>el.addEventListener("click", ()=>{
+    const [s,t]=el.dataset.open.split("|"); openTeacherWithTopic(s,t); switchScreen("teacher");
+  }));
+}
+
+/* =========================================================================================
+   1c. FULL SYLLABUS BROWSER — Level (JHS/SHS) → Track → Subject → Form → Topic.
+   Matches each real syllabus topic against the ready LESSONS content by keyword, so a topic
+   opens the real interactive lesson whenever one exists, and is honestly marked "coming soon"
+   otherwise (no made-up content is ever shown).
+   ========================================================================================= */
+const SUBJECT_FAMILY = [
+  { test:/math/i, family:"maths" },
+  { test:/english/i, family:"english" },
+  { test:/science|physics|chemistry|biology/i, family:"science" },
+  { test:/account|business|economic|cost/i, family:"business" },
+  { test:/art|government|geography|history|literature|french|religious|social studies/i, family:"arts" }
+];
+function familyForSubject(subjectName, level){
+  if(level === "Primary") return LESSONS.primary ? "primary" : null;
+  const hit = SUBJECT_FAMILY.find(f=>f.test.test(subjectName));
+  return hit ? hit.family : null;
+}
+function findReadyMatch(subjectName, topicTitle, level){
+  const family = familyForSubject(subjectName, level);
+  if(!family || !LESSONS[family]) return null;
+  const s = topicTitle.toLowerCase();
+  for(const key of Object.keys(LESSONS[family].topics)){
+    const t = LESSONS[family].topics[key];
+    const a = t.title.toLowerCase();
+    if(s.includes(a) || a.includes(s)) return { subject:family, topic:key };
+    const words = a.split(/\W+/).filter(w=>w.length>=5);
+    if(words.some(w=>s.includes(w))) return { subject:family, topic:key };
+  }
+  return null;
+}
+let sylState = { level:"JHS", track:null, subject:null, form:"F1" };
+function renderSyllabusBrowser(){
+  document.querySelectorAll("#level-toggle button").forEach(b=>b.classList.toggle("on", b.dataset.lvl===sylState.level));
+  const tracks = CURRICULUM[sylState.level];
+  if(!sylState.track || !tracks[sylState.track]) sylState.track = Object.keys(tracks)[0];
+  const tabs = document.getElementById("track-tabs");
+  tabs.innerHTML = Object.keys(tracks).map(tr=>{
+    const color = TRACK_COLOR[tr] || "#6d5bf0";
+    return `<button data-track="${tr}" style="--tc:${color}" class="${tr===sylState.track?'on':''}">${tr}</button>`;
+  }).join("");
+  tabs.querySelectorAll("[data-track]").forEach(b=>b.addEventListener("click", ()=>{ sylState.track=b.dataset.track; sylState.subject=null; renderSyllabusBrowser(); }));
+
+  const subjGrid = document.getElementById("syllabus-subject-grid");
+  const subjects = tracks[sylState.track];
+  const color = TRACK_COLOR[sylState.track] || "#6d5bf0";
+  subjGrid.innerHTML = Object.keys(subjects).map(subj=>{
+    const forms = subjects[subj];
+    const total = Object.values(forms).reduce((a,arr)=>a+arr.length,0);
+    let ready=0; Object.values(forms).forEach(arr=>arr.forEach(t=>{ if(findReadyMatch(subj,t,sylState.level)) ready++; }));
+    return `<button class="subj-card" data-syl-subj="${escapeHtml(subj)}" style="--tc:${color}">
+      <span class="ring" style="color:${color}">${ready}/${total}</span>
+      <div class="ic">📘</div><h4>${escapeHtml(subj)}</h4><span>${total} topics · ${FORM_LABELS[sylState.level].length} ${sylState.level==="Primary"?"classes":"forms"}</span></button>`;
+  }).join("");
+  subjGrid.querySelectorAll("[data-syl-subj]").forEach(btn=>btn.addEventListener("click", ()=>{
+    sylState.subject = btn.dataset.sylSubj; sylState.form = (SB.userClass && SB.userClass.level===sylState.level) ? SB.userClass.grade : FORM_LABELS[sylState.level][0][0];
+    renderSyllabusTopics();
+  }));
+  document.getElementById("syllabus-topic-panel").innerHTML = "";
+}
+function renderSyllabusTopics(){
+  const panel = document.getElementById("syllabus-topic-panel");
+  const subj = sylState.subject;
+  const color = TRACK_COLOR[sylState.track] || "#6d5bf0";
+  const forms = CURRICULUM[sylState.level][sylState.track][subj];
+  let html = `<div class="section-title">${escapeHtml(subj)}</div>
+    <div class="form-tabs" style="--tc:${color}">` +
+    FORM_LABELS[sylState.level].map(([key,label])=>`<button data-form="${key}" class="${sylState.form===key?'on':''}" style="--tc:${color}">${label}</button>`).join("") +
+    `</div><div class="syllabus-note">Topics marked <b>Ready</b> open a full interactive lesson. <b>Coming soon</b> topics are shown for reference — no lesson content is faked.</div>`;
+  const topics = forms[sylState.form];
+  html += topics.map(t=>{
+    const match = findReadyMatch(subj, t, sylState.level);
+    return `<div class="syl-topic-row" data-topic="${escapeHtml(t)}" data-match="${match?match.subject+'|'+match.topic:''}">
+      <span class="stt">${escapeHtml(t)}</span>
+      <span class="syl-badge ${match?'ready':'soon'}">${match?'▶ Ready':'🛠 Coming soon'}</span>
+    </div>`;
+  }).join("");
+  panel.innerHTML = html;
+  panel.querySelectorAll("[data-form]").forEach(b=>b.addEventListener("click", ()=>{ sylState.form=b.dataset.form; renderSyllabusTopics(); }));
+  panel.querySelectorAll(".syl-topic-row").forEach(row=>row.addEventListener("click", ()=>{
+    const match = row.dataset.match;
+    if(match){
+      const [s,t] = match.split("|");
+      openTeacherWithTopic(s,t); switchScreen("teacher");
+    } else {
+      const family = familyForSubject(subj, sylState.level);
+      const alt = family && LESSONS[family] ? Object.values(LESSONS[family].topics)[0] : null;
+      toast(alt ? `Lesson coming soon — try "${alt.title}" in ${LESSONS[family].label} for now` : "Lesson coming soon for this topic");
+    }
+  }));
+}
+document.getElementById("level-toggle").addEventListener("click", (e)=>{
+  const btn = e.target.closest("[data-lvl]"); if(!btn) return;
+  sylState.level = btn.dataset.lvl; sylState.track = null; sylState.subject = null;
+  renderSyllabusBrowser();
+});
+
+function renderProgress(){
+  refreshHeaderStats();
+  const list = document.getElementById("mastery-list");
+  let html = "";
+  SUBJECT_ORDER.forEach(s=>{
+    Object.keys(LESSONS[s].topics).forEach(key=>{
+      const t = LESSONS[s].topics[key]; const m = getMastery(s,key);
+      const acc = (m.correct+m.wrong) ? Math.round(m.correct/(m.correct+m.wrong)*100) : 0;
+      html += `<div class="mastery-row"><div class="mi">${LESSONS[s].icon}</div>
+        <div class="mt"><b>${escapeHtml(t.title)}${m.completed?" 🏆":""}</b><div class="mbar"><i style="width:${acc}%"></i></div></div>
+        <div class="mp">${acc}%</div></div>`;
+    });
+  });
+  list.innerHTML = html;
+  let totalTopics=0, totalSubjects=0, readyTopics=0;
+  Object.keys(CURRICULUM).forEach(lvl=>{
+    Object.keys(CURRICULUM[lvl]).forEach(tr=>{
+      Object.keys(CURRICULUM[lvl][tr]).forEach(subj=>{
+        totalSubjects++;
+        Object.values(CURRICULUM[lvl][tr][subj]).forEach(arr=>{
+          totalTopics += arr.length;
+          arr.forEach(t=>{ if(findReadyMatch(subj,t,lvl)) readyTopics++; });
+        });
+      });
+    });
+  });
+  document.getElementById("syllabus-coverage-text").innerHTML =
+    `<b>${totalTopics} topics</b> across <b>${totalSubjects} subjects</b> in the full Primary, JHS &amp; SHS syllabus — <b>${readyTopics}</b> have ready interactive lessons so far.`;
+}
+
+/* =========================================================================================
+   9. TEACHER SCREEN CONTROLLER
+   ========================================================================================= */
+let teacherCtx = { subject:null, topic:null };
+function openTeacherWithTopic(subject, topic){
+  teacherCtx = { subject, topic };
+  SB.lastTopic = { subject, topic }; saveState();
+  document.getElementById("board-zone").style.display = "none";
+  document.getElementById("question-box").style.display = "none";
+  teachTopic(subject, topic);
+}
+function teachTopic(subject, topic){
+  const t = LESSONS[subject].topics[topic];
+  document.getElementById("board-zone").style.display = "block";
+  document.getElementById("question-box").style.display = "none";
+  document.getElementById("board-title").textContent = t.title;
+  document.getElementById("board-list").innerHTML = t.teach.map(l=>`<li>${escapeHtml(l)}</li>`).join("");
+  speakText(t.teach.join(" "), { onend:()=>{ setTimeout(()=>askQuestion(subject, topic), 500); } });
+}
+function handleUserMessage(text){
+  document.getElementById("text-input").value = "";
+  const res = generateTeacherResponse(text, {
+    subject: teacherCtx.subject, topic: teacherCtx.topic,
+    currentOptions: activeQ ? activeQ.question.options : null
+  });
+  if(res.action === "teach"){ teacherCtx = {subject:res.data.subject, topic:res.data.topic}; SB.lastTopic = teacherCtx; saveState(); teachTopic(res.data.subject, res.data.topic); return; }
+  if(res.action === "question"){ teacherCtx = {subject:res.data.subject, topic:res.data.topic}; askQuestion(res.data.subject, res.data.topic); return; }
+  if(res.action === "answer"){ if(activeQ) submitAnswer(-1); return; }
+  if(res.action === "submit"){
+    if(!activeQ) { speakText("There's no question active — say 'test me' to get one."); return; }
+    let idx = res.data.index;
+    if(idx===undefined && res.data.letter){ idx = {a:0,b:1,c:2,d:3}[res.data.letter]; }
+    if(idx!==undefined) submitAnswer(idx);
+    return;
+  }
+  if(res.reply) speakText(res.reply);
+}
+document.getElementById("text-send").addEventListener("click", ()=>{
+  const v = document.getElementById("text-input").value.trim();
+  if(v) handleUserMessage(v);
+});
+document.getElementById("text-input").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("text-send").click(); });
+document.querySelectorAll("#quick-row button").forEach(b=>b.addEventListener("click", ()=>handleUserMessage(b.dataset.say)));
+
+/* =========================================================================================
+   10. NAVIGATION, ONBOARDING, THEME, TOASTS, INIT
+   ========================================================================================= */
+function switchScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active", s.id==="screen-"+name));
+  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on", b.dataset.screen===name));
+  if(name==="home") renderHome();
+  if(name==="subjects") renderSubjects();
+  if(name==="feed") renderFeed();
+  if(name==="progress") renderProgress();
+  if(name!=="teacher"){ if("speechSynthesis" in window) speechSynthesis.cancel(); avatarSetTalking(false); }
+}
+document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click", ()=>switchScreen(b.dataset.screen)));
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove("on"), 2400);
+}
+function confettiBurst(){
+  const emojis=["🎉","✨","🌟","🏆"];
+  for(let i=0;i<16;i++){
+    const s=document.createElement("span"); s.className="confetti"; s.textContent=emojis[i%emojis.length];
+    s.style.left=(4+Math.random()*92)+"%"; s.style.animationDuration=(1.6+Math.random()*1.1)+"s"; s.style.animationDelay=(Math.random()*.4)+"s";
+    document.body.appendChild(s); setTimeout(()=>s.remove(), 3200);
+  }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// theme toggle
+function applyTheme(){
+  if(SB.theme){ document.documentElement.setAttribute("data-theme", SB.theme); }
+  document.getElementById("theme-toggle").textContent = (SB.theme==="dark" || (!SB.theme && matchMedia('(prefers-color-scheme: dark)').matches)) ? "☀️" : "🌙";
+}
+document.getElementById("theme-toggle").addEventListener("click", ()=>{
+  const current = SB.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? "dark":"light");
+  SB.theme = current==="dark" ? "light" : "dark";
+  saveState(); applyTheme();
+});
+
+// onboarding + class picker (also reused by the topbar "change class" pill)
+const CLASS_GRADE_ICON = { Primary:"🧒", JHS:"📗", SHS:"📘" };
+function pickTopicForClass(){
+  // Prefer a syllabus topic that matches the student's exact class/form; fall back to any ready topic for their level.
+  if(SB.userClass){
+    const {level, grade} = SB.userClass;
+    const tracks = CURRICULUM[level];
+    for(const tr of Object.keys(tracks)){
+      for(const subj of Object.keys(tracks[tr])){
+        const topics = tracks[tr][subj][grade] || [];
+        for(const t of topics){
+          const match = findReadyMatch(subj, t, level);
+          if(match) return match;
+        }
+      }
+    }
+    const fam = quickSubjectsForClass()[0];
+    if(fam && LESSONS[fam]) return { subject:fam, topic:Object.keys(LESSONS[fam].topics)[0] };
+  }
+  return { subject:"maths", topic:"numbers" };
+}
+function renderGradeGrid(level){
+  const grid = document.getElementById("ob3-grid");
+  document.getElementById("ob3-mark").textContent = CLASS_GRADE_ICON[level] || "🎯";
+  document.getElementById("ob3-title").textContent = level==="Primary" ? "Which class are you in?" : level==="JHS" ? "Which JHS form?" : "Which SHS form?";
+  document.getElementById("ob3-sub").textContent = "Pick your exact class so lessons match your level.";
+  grid.innerHTML = FORM_LABELS[level].map(([key,label])=>`<button data-grade="${key}">${label}</button>`).join("");
+  grid.querySelectorAll("[data-grade]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const label = FORM_LABELS[level].find(f=>f[0]===btn.dataset.grade)[1];
+      SB.userClass = { level, grade:btn.dataset.grade, label: level==="Primary" ? label : label.split(" · ")[0] };
+      SB.onboarded = true;
+      saveState(); refreshHeaderStats();
+      finishClassPicker();
+    });
+  });
+}
+function finishClassPicker(){
+  document.getElementById("onboarding").classList.add("hidden");
+  const pick = pickTopicForClass();
+  switchScreen("teacher");
+  openTeacherWithTopic(pick.subject, pick.topic);
+}
+function openClassPicker(){
+  const ob = document.getElementById("onboarding");
+  document.querySelector(".ob-step1").style.display = "none";
+  document.querySelector(".ob-step3").classList.remove("on");
+  document.querySelector(".ob-step2").classList.add("on");
+  ob.classList.remove("hidden");
+}
+function initOnboarding(){
+  const ob = document.getElementById("onboarding");
+  document.getElementById("ob-continue").addEventListener("click", ()=>{
+    document.querySelector(".ob-step1").style.display = "none";
+    document.querySelector(".ob-step2").classList.add("on");
+  });
+  document.querySelectorAll(".ob-step2 [data-level]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelector(".ob-step2").classList.remove("on");
+      document.querySelector(".ob-step3").classList.add("on");
+      renderGradeGrid(btn.dataset.level);
+    });
+  });
+  document.getElementById("ob3-back").addEventListener("click", ()=>{
+    document.querySelector(".ob-step3").classList.remove("on");
+    document.querySelector(".ob-step2").classList.add("on");
+  });
+  document.getElementById("class-pill").addEventListener("click", openClassPicker);
+  if(SB.onboarded){ ob.classList.add("hidden"); }
+}
+
+// ---------------- PWA: install prompt + service worker ----------------
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById("install-btn");
+  if(btn) btn.style.display = "flex";
+});
+document.getElementById("install-btn").addEventListener("click", async () => {
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById("install-btn").style.display = "none";
+});
+window.addEventListener("appinstalled", () => {
+  document.getElementById("install-btn").style.display = "none";
+  toast("StudyBuddy installed! 🎉");
+});
+function isStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+function maybeShowIOSInstallHint(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isIOS && !isStandalone() && !localStorage.getItem("sb_ios_hint_shown")){
+    localStorage.setItem("sb_ios_hint_shown", "1");
+    setTimeout(()=>toast("Tip: tap Share, then 'Add to Home Screen' to install StudyBuddy"), 1800);
+  }
+}
+function registerServiceWorker(){
+  if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{ /* offline install not available on this host */ });
+  }
+}
+
+function init(){
+  touchDayStreak();
+  applyTheme();
+  refreshHeaderStats();
+  renderHome();
+  initSpeechRecognition();
+  initOnboarding();
+  avatarExpress("neutral");
+  registerServiceWorker();
+  maybeShowIOSInstallHint();
+}
+init();
+</script>
+</body>
+</html>
